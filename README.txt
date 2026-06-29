@@ -26,3 +26,11 @@ Publicação:
 
 Regra de estabilidade:
 Após publicar esta versão, novas mudanças antes da inauguração devem ser apenas correções críticas ou ajustes indispensáveis ao GO LIVE.
+
+
+---
+Donas OS 1.0.1
+Acesso do cliente: abrir o site normalmente.
+Acesso administrativo: adicionar ?admin=1 ao final do link.
+Exemplo: https://pedidos-donasdamassa.netlify.app/?admin=1
+Observação: sem Supabase, pedidos feitos em celulares diferentes não aparecem automaticamente no painel interno; o fluxo de confirmação é pelo WhatsApp.

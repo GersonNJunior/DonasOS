@@ -1,7 +1,7 @@
 {
-  "version": "1.0.0",
-  "name": "Donas OS 1.0.0 - Produção GO LIVE",
+  "version": "1.0.1",
+  "name": "Donas OS 1.0.1 - GO LIVE público/admin",
   "date": "2026-06-29",
-  "status": "release-candidate-aprovada",
-  "notes": "Versão oficial homologada para publicação online: Donas Online com pedidos, WhatsApp, talher, banner configurável, retirada/delivery e base administrativa local."
+  "status": "release-candidate",
+  "notes": "Separa o acesso público do cliente do painel administrativo. Link sem parâmetros abre apenas Donas Online; painel interno fica em ?admin=1. Ajusta fluxo de WhatsApp no pedido online."
 }
