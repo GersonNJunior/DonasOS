@@ -1,7 +1,7 @@
 {
-  "version": "1.0.3",
-  "name": "Donas OS GO LIVE",
-  "date": "2026-06-29",
+  "version": "1.0.4",
+  "name": "Donas OS 1.0.4 GO LIVE",
+  "date": "2026-06-29T21:54:14.131090",
   "status": "release-candidate",
-  "notes": "Mensagem pública de loja fechada"
+  "notes": "Polimento mensagem loja fechada pública e toast mobile."
 }
