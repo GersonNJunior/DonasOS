@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Donas OS 4.1.1.1 - Correção Online</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <img class="brand-logo" src="assets/img/logo-donas-da-massa.png" alt="Logo Donas da Massa">
+        <div><strong>Donas da Massa</strong><span id="internalName">Donas OS 4.1.1.1</span></div>
+      </div>
+      <nav class="nav nav-modular">
+        <details class="nav-group" open>
+          <summary>📊 Operação</summary>
+          <button class="active" data-page="pdv">🍝 Montar Pedido</button>
+          <button data-page="dashboard">🏠 Início</button>
+          <button data-page="operacao">🟢 Operação</button>
+          <button data-page="pedidos">🧾 Pedidos</button>
+          <button data-page="cozinha">👨‍🍳 Cozinha</button>
+          <button data-page="clientes">👥 Clientes</button>
+        </details>
+        <details class="nav-group" open>
+          <summary>📦 Gestão</summary>
+          <button data-page="estoque">📦 Estoque</button>
+          <button data-page="compras">🛒 Compras</button>
+          <button data-page="producao">🏭 Produção</button>
+        </details>
+        <details class="nav-group">
+          <summary>💰 Administração</summary>
+          <button data-page="financeiro">💰 Financeiro</button>
+          <button data-page="marketing">📣 Campanhas</button>
+          <button data-page="insights">📊 Insights</button>
+          <button data-page="relatorios">📑 Relatórios</button>
+          <button data-page="online">🌐 Online Ready</button>
+          <button data-page="portal">🍝 Donas Online</button>
+          <button data-page="config">⚙️ Configurações</button>
+        </details>
+      </nav>
+      <div class="sidebar-card">
+        <small>Caixa atual</small>
+        <strong id="sideCaixa">R$ 0,00</strong>
+        <span id="sideMode">Local/offline • preparado para Supabase</span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Sistema de gestão</p>
+          <h1 id="pageTitle">Montar Pedido</h1>
+        </div>
+        <div class="top-actions">
+          <button class="ghost" onclick="App.exportarBackup()">Exportar backup</button>
+          <label class="ghost upload">Importar backup<input type="file" accept=".json" onchange="App.importarBackup(event)"></label>
+        </div>
+      </header>
+
+      <section id="page-pdv" class="page active">
+        <div class="pdv-layout">
+          <div class="builder">
+            <div class="hero-card">
+              <p class="eyebrow">Pedido personalizado</p>
+              <h2>Monte o macarrão do seu jeito</h2>
+              <p>Escolha massa, molho, proteína e complementos. O sistema aplica automaticamente as regras de proteínas e complementos grátis.</p>
+            </div>
+            <div id="favoritosBox" class="favorite-box"></div>
+            <div class="progress"><span></span><span></span><span></span><span></span><span></span></div>
+            <div id="steps"></div>
+          </div>
+          <aside class="order-panel">
+            <div class="order-head"><span>Pedido</span><strong id="pedidoNumero">#0001</strong></div>
+            <div class="field"><label>Cliente</label><input id="clientePedido" placeholder="Nome do cliente"></div>
+            <div class="field client-search-field"><label>Telefone</label><input id="telefonePedido" placeholder="Digite o telefone para buscar cliente"><div id="clientesEncontrados" class="client-results hidden"></div><small class="hint">Digite apenas o número. Não precisa informar o DDD para localizar clientes já cadastrados.</small></div>
+            <div class="field"><label>Tipo</label><select id="tipoPedido"><option value="Balcão">Retirada / Balcão</option><option value="Delivery">Delivery</option></select></div>
+            <div id="deliveryBox" class="delivery-box hidden">
+              <div class="field"><label>Endereço</label><input id="enderecoPedido" placeholder="Rua, número, complemento"></div>
+              <div class="field"><label>Bairro</label><input id="bairroPedido" placeholder="Bairro"></div>
+            </div>
+            <div class="field"><label>Forma de pagamento prevista</label><select id="pagamentoPedido"><option>PIX</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option><option>iFood</option><option>Outro</option></select><small class="hint">Use para separar maquininha ou orientar o caixa. Só entra no financeiro quando o pedido for entregue.</small></div>
+            <div id="pratosPedido" class="plate-box hidden"></div>
+            <div id="resumoPedido" class="summary empty-summary">Selecione os itens do prato ou adicione bebidas/sobremesas avulsas</div>
+            <button class="secondary full" onclick="App.adicionarPratoPedido()">Adicionar prato ao pedido</button>
+            <div class="pending-note"><strong>Fluxo:</strong> você pode adicionar vários pratos no mesmo pedido. A venda só entra no financeiro quando for marcada como entregue.
+            <div class="field"><label>Observação</label><textarea id="obsPedido" placeholder="Ex: sem cebola, caprichar no molho"></textarea></div>
+            <div class="total-line"><span>Total</span><strong id="totalPedido">R$ 0,00</strong></div>
+            <button class="primary full" onclick="App.finalizarPedido()">Registrar pedido</button>
+            <button class="secondary full" onclick="App.limparPedido()">Limpar pedido</button>
+          </aside>
+        </div>
+      </section>
+
+      <section id="page-dashboard" class="page">
+        <div class="home-hero">
+          <div>
+            <p class="eyebrow">Donas OS • uso interno</p>
+            <h2>Bom dia! Vamos vender mais hoje?</h2>
+            <p class="muted">Painel inicial preparado para operação, marketing, parceiros e crescimento da Donas da Massa.</p>
+          </div>
+          <button class="big-order" onclick="App.page('pdv')">+ Novo pedido</button>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat"><span>Pedidos hoje</span><strong id="dashPedidosHoje">0</strong><small>pedidos de hoje</small></article>
+          <article class="stat"><span>Faturamento</span><strong id="dashFaturamento">R$ 0,00</strong><small>total vendido</small></article>
+          <article class="stat"><span>Ticket médio</span><strong id="dashTicket">R$ 0,00</strong><small>média por pedido</small></article>
+          <article class="stat"><span>Lucro estimado</span><strong id="dashLucro">R$ 0,00</strong><small>vendas menos custos</small></article>
+        </div>
+
+        <div class="grid2 ops-grid">
+          <div class="card goal-card">
+            <h3>Meta do dia</h3>
+            <div class="goal-head"><strong id="metaValorHoje">R$ 0,00</strong><span id="metaPercentual">0%</span></div>
+            <div class="goal-bar"><b id="metaBarra" style="width:0%"></b></div>
+            <small class="muted">Ajuste a meta nas configurações.</small>
+          </div>
+          <div class="card operation-card">
+            <h3>Modo de uso</h3>
+            <p class="muted">Use o modo operação no horário de pico para deixar apenas pedido, pedidos e cozinha em destaque.</p>
+            <button class="secondary full" id="modoOperacaoBtn" onclick="App.alternarModoOperacao()">Ativar modo operação</button>
+          </div>
+        </div>
+
+        <div class="grid2 ops-grid">
+          <div class="card"><h3>Mural rápido</h3><div class="mural-form"><input id="muralTexto" placeholder="Ex: comprar parmesão amanhã"><button class="primary" onclick="App.adicionarMural()">Adicionar</button></div><div id="muralLista"></div></div>
+          <div class="card"><h3>Fechamento rápido</h3><p class="muted">Confira o resumo do dia, formas de pagamento e gere uma visão para conferência.</p><button class="primary full" onclick="App.fecharCaixa()">Fechar / Conferir caixa de hoje</button></div>
+        </div>
+
+        <div class="marketing-strip">
+          <div class="marketing-card highlight">
+            <span>Parceiro do mês</span>
+            <strong>Espaço reservado</strong>
+            <p>Área pronta para patrocínios, fornecedores, parceiros locais ou campanhas futuras.</p>
+          </div>
+          <div class="marketing-card">
+            <span>Dica do Chef</span>
+            <strong>Penne + Branco + Bacon</strong>
+            <p>Sugestão comercial para ajudar o atendimento a aumentar o ticket médio.</p>
+          </div>
+          <div class="marketing-card">
+            <span>Novidades</span>
+            <strong>Marketing Center</strong>
+            <p>Banners, avisos e promoções ficarão centralizados no novo módulo de marketing.</p>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card"><h3>Últimos pedidos</h3><div id="ultimosPedidos"></div></div>
+          <div class="card"><h3>Mais utilizados</h3><div id="rankingItens"></div></div>
+        </div>
+        <div class="card"><h3>Alertas de estoque</h3><div id="alertasEstoque"></div></div>
+        <div class="card"><h3>Inteligência do dia</h3><div id="insightsDia"></div></div>
+      </section>
+
+      <section id="page-operacao" class="page">
+        <div class="home-hero compact status-hero">
+          <div>
+            <p class="eyebrow">Release 2.4 • Produção</p>
+            <h2>Painel Operacional</h2>
+            <p class="muted">Visão rápida para abrir a loja com segurança: status da operação, portal, WhatsApp, PIX, backup e alertas essenciais.</p>
+          </div>
+          <button class="big-order" onclick="App.page('pdv')">+ Novo pedido</button>
+        </div>
+        <div class="stats-grid">
+          <article class="stat"><span>Status da loja</span><strong id="opLoja">Fechada</strong><small id="opLojaDetalhe">modo local</small></article>
+          <article class="stat"><span>Aguardando</span><strong id="opAguardando">0</strong><small>confirmação/pedido feito</small></article>
+          <article class="stat"><span>Preparando</span><strong id="opPreparando">0</strong><small>em produção</small></article>
+          <article class="stat"><span>Prontos</span><strong id="opProntos">0</strong><small>aguardando retirada/entrega</small></article>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Diagnóstico da loja</h3><div id="diagnosticoLista"></div></div>
+          <div class="card"><h3>Checklist de abertura</h3><div id="checklistAbertura"></div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Rotina de hoje</h3><div id="rotinaHoje"></div></div>
+          <div class="card"><h3>Resumo rápido</h3><div id="opResumo"></div></div>
+        </div>
+      </section>
+
+      <section id="page-marketing" class="page">
+        <div class="home-hero compact">
+          <div>
+            <p class="eyebrow">Central de Campanhas</p>
+            <h2>Campanhas internas e do Portal Cliente</h2>
+            <p class="muted">Cadastre banners, promoções, parceiros e avisos, escolhendo onde cada campanha aparece: no Donas OS, no Portal Cliente ou nos dois.</p>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <h3 id="formMarketingTitulo">Cadastrar campanha</h3>
+            <input type="hidden" id="mkId">
+            <div class="field"><label>Tipo</label><select id="mkTipo"><option>Parceiro</option><option>Banner</option><option>Promoção</option><option>Aviso</option><option>Dica do Chef</option><option>Combo</option><option>Destaque</option></select></div>
+            <div class="row"><div class="field"><label>Posição no Portal</label><select id="mkPosicao"><option>Banner principal</option><option>Vitrine</option><option>Parceiros</option><option>Aviso</option><option>Rodapé</option></select></div><div class="field"><label>Status</label><select id="mkAtivo"><option value="true">Ativo</option><option value="false">Inativo</option></select></div></div>
+            <div class="row"><div class="field"><label>Data inicial</label><input id="mkInicio" type="date"></div><div class="field"><label>Data final</label><input id="mkFim" type="date"></div></div>
+            <div class="field"><label>Onde exibir</label><div class="check-grid"><label><input id="mkInterno" type="checkbox" checked> Donas OS/Início</label><label><input id="mkPortal" type="checkbox" checked> Portal Cliente</label></div><small class="hint">Use Portal Cliente para promoções, parceiros e banners que o cliente verá no cardápio online.</small></div>
+            <div class="field"><label>Título / Empresa</label><input id="mkTitulo" placeholder="Ex: Parceiro do mês"></div>
+            <div class="field"><label>Descrição</label><textarea id="mkDescricao" placeholder="Texto que aparecerá no card"></textarea></div>
+            <div class="field"><label>Instagram / Link / Contato</label><input id="mkLink" placeholder="Opcional"></div>
+            <div class="field"><label>Texto do botão</label><input id="mkBotao" placeholder="Ex: Peça agora, Saiba mais"></div>
+            <div class="field"><label>Imagem ou banner</label><input id="mkImagemFile" type="file" accept="image/*" onchange="App.carregarImagemMarketing(event)"><input id="mkImagem" placeholder="Ou cole uma URL/caminho de imagem"><small class="hint">Você pode enviar uma imagem do computador ou colar uma URL.</small></div>
+            <div class="row"><div class="field"><label>Modo do banner no Portal</label><select id="mkModoBanner"><option value="informativo">Informativo: imagem + texto</option><option value="imagem">Apenas imagem</option></select></div><div class="field"><label>Tamanho do banner</label><select id="mkAlturaBanner"><option value="160">Pequeno</option><option value="260" selected>Médio</option><option value="380">Grande</option><option value="520">Tela cheia</option></select></div></div>
+            <small class="hint">Para banner apenas com imagem, deixe título/descrição vazios se quiser.</small>
+            <button class="primary full" onclick="App.salvarMarketing()">Salvar campanha</button>
+            <button class="secondary full" onclick="App.limparMarketing()">Nova campanha</button>
+          </div>
+          <div class="card"><h3>Campanhas cadastradas</h3><div id="listaMarketing"></div></div>
+        </div>
+      </section>
+
+      <section id="page-pedidos" class="page">
+        <div class="home-hero compact status-hero">
+          <p class="eyebrow">Fluxo operacional</p>
+          <h2>Pedidos em andamento</h2>
+          <p class="muted">Registre o pedido no PDV, acompanhe a produção aqui e só contabilize a venda ao marcar como Entregue com forma de pagamento.</p>
+        </div>
+        <div class="kanban" id="kanbanPedidos"></div>
+        <div class="card"><h3>Histórico de pedidos</h3><div id="listaPedidos"></div></div>
+      </section>
+
+
+      <section id="page-cozinha" class="page">
+        <div class="home-hero compact status-hero">
+          <p class="eyebrow">Modo cozinha</p>
+          <h2>Painel de preparo</h2>
+          <p class="muted">Tela simplificada para quem vai preparar os pedidos. Mostra somente o que precisa ser feito, sem financeiro e sem informações administrativas.</p>
+        </div>
+        <div class="kitchen-board" id="cozinhaBoard"></div>
+      </section>
+
+      <section id="page-estoque" class="page">
+        <div class="inventory-layout">
+          <div class="card inventory-form-card">
+            <h3 id="formItemTitulo">Cadastrar item</h3>
+            <input type="hidden" id="itemId">
+            <div class="field"><label>Nome</label><input id="itemNome" placeholder="Ex: Penne"></div>
+            <div class="field"><label>Categoria</label><select id="itemCategoria"><option>Massa</option><option>Molho</option><option>Proteína</option><option>Complemento</option><option>Finalização</option><option>Bebida</option><option>Sobremesa</option><option>Insumo</option><option>Embalagem</option></select></div>
+            <div class="row"><div class="field"><label>Preço venda</label><input id="itemPreco" type="number" step="0.01"></div><div class="field"><label>Custo</label><input id="itemCusto" type="number" step="0.01"></div></div>
+            <div class="row"><div class="field"><label>Estoque</label><input id="itemEstoque" type="number" step="0.01"></div><div class="field"><label>Mínimo</label><input id="itemMinimo" type="number" step="0.01"></div></div>
+            <div class="row"><div class="field"><label>Unidade</label><select id="itemUnidade"><option>un</option><option>kg</option><option>g</option><option>L</option><option>ml</option><option>cx</option></select></div><div class="field"><label>Qtd. padrão por porção</label><input id="itemPorcao" type="number" step="0.01" placeholder="Ex: 100"></div></div>
+            <div class="field"><label>Ícone atual</label><input id="itemIcone" placeholder="🍝" maxlength="4"></div>
+            <div class="field"><label>Escolher ícone da lista</label><select id="itemIconeLista" onchange="App.escolherIcone(this.value)"></select><small class="hint">Você também pode digitar qualquer emoji no campo acima.</small></div>
+            <div class="field"><label>Imagem do item</label><input id="itemImagem" placeholder="Ex: assets/img/ingredientes/calabresa.png"><small class="hint">Pode usar caminho local do projeto ou URL. Para calabresa já existe: assets/img/ingredientes/calabresa.png</small></div>
+            <div class="field"><label>Fornecedor / observação</label><input id="itemObs" placeholder="Opcional"></div>
+            <button class="primary full" onclick="App.salvarItem()">Salvar item</button>
+            <button class="secondary full" onclick="App.limparFormItem()">Novo cadastro</button>
+          </div>
+          <div class="card inventory-list-card"><h3>Itens cadastrados</h3><div class="filter-row"><select id="filtroCategoria" onchange="App.renderAll()"><option value="">Todas as categorias</option></select><input id="buscaItem" oninput="App.renderAll()" placeholder="Buscar item"></div><div id="listaItens"></div></div>
+        </div>
+      </section>
+
+
+      <section id="page-compras" class="page">
+        <div class="home-hero compact status-hero">
+          <p class="eyebrow">Estoque Pro</p>
+          <h2>Compras e insumos</h2>
+          <p class="muted">Registre compras de mercado, acompanhe preço por kg/L/unidade e envie para o estoque quando fizer sentido. Ideal para itens de venda e também insumos de produção, como leite, manteiga e farinha.</p>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <h3 id="formCompraTitulo">Lançar compra</h3>
+            <input type="hidden" id="compraId">
+            <div class="field"><label>Produto comprado</label><input id="compraProduto" placeholder="Ex: Leite integral"></div>
+            <div class="row"><div class="field"><label>Mercado / local</label><input id="compraLocal" placeholder="Ex: Atacadão, Assaí, Mercado do bairro"></div><div class="field"><label>Data</label><input id="compraData" type="date"></div></div>
+            <div class="row"><div class="field"><label>Quantidade</label><input id="compraQtd" type="number" step="0.01" placeholder="Ex: 5"></div><div class="field"><label>Unidade</label><select id="compraUnidade"><option>un</option><option>kg</option><option>g</option><option>L</option><option>ml</option><option>cx</option></select></div></div>
+            <div class="row"><div class="field"><label>Valor total</label><input id="compraValor" type="number" step="0.01" placeholder="Ex: 49.90"></div><div class="field"><label>Categoria para estoque</label><select id="compraCategoria"><option>Insumo</option><option>Massa</option><option>Molho</option><option>Proteína</option><option>Complemento</option><option>Finalização</option><option>Bebida</option><option>Sobremesa</option><option>Embalagem</option></select></div></div>
+            <div class="field"><label>Item de estoque relacionado</label><select id="compraItemEstoque"><option value="">Criar novo / não vincular agora</option></select><small class="hint">Se escolher um item existente, a compra pode ser somada ao estoque dele. Insumos não aparecem no montar pedido.</small></div>
+            <label class="check-line"><input id="compraAddEstoque" type="checkbox" checked> Adicionar quantidade ao estoque</label>
+            <label class="check-line"><input id="compraFinanceiro" type="checkbox" checked> Lançar como saída no financeiro</label>
+            <div class="field"><label>Observação</label><textarea id="compraObs" placeholder="Ex: promoção, validade, marca, compra para molho branco"></textarea></div>
+            <button class="primary full" onclick="App.salvarCompra()">Salvar compra</button>
+            <button class="secondary full" onclick="App.limparCompra()">Nova compra</button>
+          </div>
+          <div class="card"><h3>Resumo de compras</h3><div id="resumoCompras"></div><h3 style="margin-top:18px">Histórico de compras</h3><div class="filter-row"><input id="buscaCompra" oninput="App.renderAll()" placeholder="Buscar produto, mercado ou observação"><select id="filtroCompraCategoria" onchange="App.renderAll()"><option value="">Todas as categorias</option></select></div><div id="listaCompras"></div></div>
+        </div>
+      </section>
+
+
+      <section id="page-producao" class="page">
+        <div class="home-hero compact status-hero">
+          <p class="eyebrow">Estoque Pro</p>
+          <h2>Produção e ficha técnica</h2>
+          <p class="muted">Cadastre receitas-base, como molho branco, e registre a produção. O Donas OS desconta os insumos e adiciona o produto pronto ao estoque.</p>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <h3 id="formReceitaTitulo">Cadastrar ficha técnica</h3>
+            <input type="hidden" id="receitaId">
+            <div class="field"><label>Produto produzido</label><select id="receitaProduto"></select><small class="hint">Ex.: Molho Branco. Se ainda não existir, cadastre o item no Estoque primeiro.</small></div>
+            <div class="row"><div class="field"><label>Rendimento da receita</label><input id="receitaRendimento" type="number" step="0.01" placeholder="Ex: 10"></div><div class="field"><label>Unidade</label><select id="receitaUnidade"><option>L</option><option>ml</option><option>kg</option><option>g</option><option>un</option></select></div></div>
+            <div class="divider"></div>
+            <h4>Insumos da receita</h4>
+            <div class="row"><div class="field"><label>Insumo</label><select id="receitaInsumo"></select></div><div class="field"><label>Quantidade usada</label><input id="receitaInsumoQtd" type="number" step="0.01" placeholder="Ex: 8"></div></div>
+            <button class="secondary full" onclick="App.adicionarInsumoReceita()">Adicionar insumo à ficha</button>
+            <div id="receitaInsumosTemp" class="recipe-preview"></div>
+            <button class="primary full" onclick="App.salvarReceita()">Salvar ficha técnica</button>
+            <button class="secondary full" onclick="App.limparReceita()">Nova ficha</button>
+          </div>
+          <div class="card">
+            <h3>Registrar produção</h3>
+            <div class="field"><label>Ficha técnica</label><select id="producaoReceita" onchange="App.renderProducao()"></select></div>
+            <div class="field"><label>Quantidade produzida</label><input id="producaoQtd" type="number" step="0.01" placeholder="Ex: 20"></div>
+            <button class="primary full" onclick="App.registrarProducao()">Registrar produção</button>
+            <div id="previewProducao" class="production-preview"></div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Fichas técnicas cadastradas</h3><div id="listaReceitas"></div></div>
+          <div class="card"><h3>Histórico de produção</h3><div id="listaProducoes"></div></div>
+        </div>
+      </section>
+
+      <section id="page-insights" class="page">
+        <div class="home-hero compact status-hero">
+          <div>
+            <p class="eyebrow">Donas Insights</p>
+            <h2>Inteligência de gestão</h2>
+            <p class="muted">Resumo automático baseado em pedidos, compras, estoque e produção. Use esta tela para decidir compras, produção e melhorias no cardápio.</p>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <article class="stat"><span>Faturamento hoje</span><strong id="insFaturamentoHoje">R$ 0,00</strong><small>pedidos entregues</small></article>
+          <article class="stat"><span>Pedidos hoje</span><strong id="insPedidosHoje">0</strong><small>concluídos</small></article>
+          <article class="stat"><span>Ticket médio</span><strong id="insTicketHoje">R$ 0,00</strong><small>média do dia</small></article>
+          <article class="stat"><span>Lucro estimado</span><strong id="insLucroHoje">R$ 0,00</strong><small>vendas - custos</small></article>
+        </div>
+        <div class="grid2">
+          <div class="card intelligence-card"><h3>Comparativo comercial</h3><div id="insComparativo"></div></div>
+          <div class="card intelligence-card"><h3>Meta e previsão do dia</h3><div id="insMetaSprint"></div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Campeões do cardápio</h3><div id="insRankingCategorias"></div></div>
+          <div class="card"><h3>Consumo de ingredientes</h3><div id="insConsumoItens"></div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Formas de pagamento</h3><div id="insPagamentoSprint"></div></div>
+          <div class="card"><h3>Clientes</h3><div id="insClientesSprint"></div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Tempo médio operacional</h3><div id="insTempoSprint"></div></div>
+          <div class="card"><h3>Tendências e conquistas</h3><div id="insTendenciaSprint"></div><div id="insConquistasSprint" style="margin-top:12px"></div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Compras inteligentes</h3><div id="insCompras"></div></div>
+          <div class="card"><h3>Alertas e sugestões</h3><div id="insAlertas"></div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Horário de pico</h3><div id="insHorarios"></div></div>
+          <div class="card"><h3>Clientes para reativar</h3><div id="insClientes"></div></div>
+        </div>
+      </section>
+
+
+      <section id="page-relatorios" class="page">
+        <div class="home-hero compact status-hero">
+          <div>
+            <p class="eyebrow">Donas OS</p>
+            <h2>Relatórios gerenciais</h2>
+            <p class="muted">Visão consolidada de vendas, formas de pagamento, consumo, clientes e compras. Ideal para fechamento, análise semanal e decisões de compra.</p>
+          </div>
+          <button class="secondary" onclick="App.imprimirRelatorio()">Gerar PDF organizado</button>
+        </div>
+        <div class="card">
+          <h3>Período do relatório</h3>
+          <div class="filter-row">
+            <select id="relPeriodo" onchange="App.renderRelatorios()">
+              <option value="hoje">Hoje</option>
+              <option value="7">Últimos 7 dias</option>
+              <option value="30">Últimos 30 dias</option>
+              <option value="todos">Todos os dados</option>
+            </select>
+            <button class="secondary" onclick="App.renderRelatorios()">Atualizar</button>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <article class="stat"><span>Faturamento</span><strong id="relFaturamento">R$ 0,00</strong><small>pedidos entregues</small></article>
+          <article class="stat"><span>Pedidos</span><strong id="relPedidos">0</strong><small>concluídos</small></article>
+          <article class="stat"><span>Ticket médio</span><strong id="relTicket">R$ 0,00</strong><small>por pedido</small></article>
+          <article class="stat"><span>Lucro estimado</span><strong id="relLucro">R$ 0,00</strong><small>vendas - custos</small></article>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Formas de pagamento</h3><div id="relPagamentos"></div></div>
+          <div class="card"><h3>Itens mais consumidos</h3><div id="relConsumo"></div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Clientes do período</h3><div id="relClientes"></div></div>
+          <div class="card"><h3>Compras do período</h3><div id="relCompras"></div></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Vendas por dia</h3><div id="relDias"></div></div>
+          <div class="card"><h3>Resumo operacional</h3><div id="relOperacional"></div></div>
+        </div>
+      </section>
+
+      <section id="page-clientes" class="page">
+        <div class="grid2">
+          <div class="card"><h3>Cadastrar cliente</h3>
+            <input type="hidden" id="clienteId">
+            <div class="field"><label>Nome</label><input id="cliNome"></div>
+            <div class="field"><label>WhatsApp</label><input id="cliTelefone"></div>
+            <div class="field"><label>Endereço</label><input id="cliEndereco"></div>
+            <div class="field"><label>Observação</label><textarea id="cliObs"></textarea></div>
+            <button class="primary full" onclick="App.salvarCliente()">Salvar cliente</button>
+            <button class="secondary full" onclick="App.limparCliente()">Novo cliente</button>
+          </div>
+          <div class="card"><h3>Clientes</h3><div id="listaClientes"></div></div>
+        </div>
+      </section>
+
+      <section id="page-financeiro" class="page">
+        <div class="stats-grid">
+          <article class="stat"><span>Entradas</span><strong id="finEntradas">R$ 0,00</strong></article>
+          <article class="stat"><span>Saídas</span><strong id="finSaidas">R$ 0,00</strong></article>
+          <article class="stat"><span>Saldo</span><strong id="finSaldo">R$ 0,00</strong></article>
+          <article class="stat"><span>Lucro estimado</span><strong id="finLucro">R$ 0,00</strong></article>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Lançar movimentação</h3>
+            <div class="field"><label>Descrição</label><input id="movDesc" placeholder="Ex: compra de embalagens"></div>
+            <div class="row"><div class="field"><label>Valor</label><input id="movValor" type="number" step="0.01"></div><div class="field"><label>Tipo</label><select id="movTipo"><option value="saida">Saída</option><option value="entrada">Entrada</option></select></div></div>
+            <button class="primary full" onclick="App.salvarMovimentacao()">Lançar</button>
+          </div>
+          <div class="card"><h3>Movimentações</h3><div id="listaMovimentacoes"></div></div>
+        </div>
+        <div class="card"><h3>Fechamentos registrados</h3><div id="listaFechamentos"></div></div>
+      </section>
+
+
+      <section id="page-online" class="page">
+        <div class="grid2">
+          <div class="card">
+            <h3>Online Ready</h3>
+            <p class="muted">Esta área prepara o Donas OS para futura integração com Supabase, cardápio público, WhatsApp e aplicativo/PWA. Por enquanto o sistema continua seguro em modo local.</p>
+            <div id="onlineStatus"></div>
+            <div class="row">
+              <div class="field"><label>Modo de dados</label><select id="syncModo"><option value="local">Local / Offline</option><option value="online">Online / Supabase futuro</option></select></div>
+              <div class="field"><label>Loja online</label><label class="check-line"><input id="syncLojaAberta" type="checkbox"> Loja aberta para pedidos externos</label></div>
+            </div>
+            <div class="field"><label>Funcionamento da loja</label><select id="syncHorarioModo"><option value="manual">Manual</option><option value="automatico">Automático por horário</option></select><small class="hint">No modo automático, o Portal Cliente abre/fecha conforme os horários abaixo. O botão manual continua disponível para exceções.</small></div>
+            <div class="schedule-grid">
+              <label><input id="horSexAtivo" type="checkbox"> Sexta <input id="horSexIni" type="time"> <input id="horSexFim" type="time"></label>
+              <label><input id="horSabAtivo" type="checkbox"> Sábado <input id="horSabIni" type="time"> <input id="horSabFim" type="time"></label>
+              <label><input id="horDomAtivo" type="checkbox"> Domingo <input id="horDomIni" type="time"> <input id="horDomFim" type="time"></label>
+            </div>
+            <div class="field"><label>Supabase URL (futuro)</label><input id="syncSupabaseUrl" placeholder="https://...supabase.co"></div>
+            <div class="field"><label>Supabase anon key (futuro)</label><input id="syncSupabaseKey" placeholder="Cole a chave pública quando formos ativar online"></div>
+            <button class="primary full" onclick="App.salvarOnlineReady()">Salvar preparação online</button>
+            <button class="secondary full" onclick="App.prepararIdsOnline()">Verificar IDs universais</button>
+          </div>
+          <div class="card"><h3>Registros locais</h3><div id="onlineContagens"></div></div>
+          <div class="card"><h3>Checklist técnico</h3><div id="onlineChecklist"></div></div>
+          <div class="card"><h3>Próxima etapa</h3><p class="muted">Quando aprovarmos o modo online, criaremos duas interfaces: <strong>Painel interno</strong> e <strong>Cardápio do cliente</strong>. O cliente montará o pedido, o pedido entrará como aguardando confirmação e será redirecionado para o WhatsApp.</p><div class="db-box"><strong>Fluxo atual local:</strong><br>Cliente monta pedido → Donas OS recebe → mensagem WhatsApp pronta → confirmação manual de pagamento → cozinha prepara.<br><br><strong>Próximo:</strong> publicar o Portal Cliente em link externo e conectar ao Supabase.</div></div>
+        </div>
+      </section>
+
+
+      <section id="page-portal" class="page donas-online-page">
+        <div class="online-phone-frame">
+          <div class="online-hero">
+            <div class="online-brandline">
+              <img src="assets/img/logo-donas-da-massa.png" alt="Donas da Massa">
+              <div>
+                <span>Donas Online</span>
+                <strong>Donas da Massa</strong>
+              </div>
+            </div>
+            <div class="online-hero-content">
+              <p class="eyebrow">Seu macarrão. Seu jeito.</p>
+              <h2>Monte seu pedido com carinho e praticidade.</h2>
+              <p id="onlineWelcomeText">Veja o cardápio sem cadastro. Quando decidir pedir, a gente solicita seus dados.</p>
+              <div class="online-status-row">
+                <span id="portalLojaStatus" class="online-store-status">Verificando loja...</span>
+                <span id="onlineTempoPreparo">Preparo médio: 20 min</span>
+              </div>
+              <div class="online-hero-actions">
+                <button class="online-primary" onclick="App.scrollPortalToCategory('Massa')">Montar meu prato</button>
+                <button class="online-secondary" onclick="App.scrollPortalTo('portalItens')">Ver cardápio</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="portalMarketing" class="online-campaign-zone"></div>
+
+          <div class="online-quick-cards" id="portalMenuAnchor">
+            <button class="online-menu-card pasta" onclick="App.scrollPortalToCategory('Massa')"><span>🍝</span><strong>Monte seu prato</strong><small>Escolha massa, molho e ingredientes</small></button>
+            <button id="onlineBebidasBtn" class="online-menu-card" onclick="App.scrollPortalToCategory('Bebida')"><span>🥤</span><strong>Bebidas</strong><small>Complete seu pedido</small></button>
+            <button id="onlineSobremesasBtn" class="online-menu-card hidden" onclick="App.scrollPortalToCategory('Sobremesa')"><span>🍰</span><strong>Sobremesas</strong><small>Complete seu pedido</small></button>
+          </div>
+
+          <div class="online-client-card portal-identificacao">
+            <div>
+              <span class="online-section-label">Cliente</span>
+              <h3>Entre com seu WhatsApp quando quiser pedir</h3>
+              <p>Você pode navegar livremente. Ao montar um pedido, use seu telefone para buscar cadastro, histórico e último pedido.</p>
+            </div>
+            <div class="online-phone-search">
+              <input id="portalTelefone" placeholder="WhatsApp com DDD" oninput="App.buscarClientePortal(false)">
+              <button class="secondary" onclick="App.buscarClientePortal(true)">Buscar</button>
+            </div>
+            <div id="portalClienteStatus" class="portal-welcome muted">Informe o telefone para buscar cadastro, histórico e último pedido.</div>
+          </div>
+
+          <div class="online-layout">
+            <div class="online-main-card">
+              <div class="online-section-head">
+                <span class="online-section-label">Cardápio</span>
+                <h3>Escolha os itens do seu pedido</h3>
+                <p>Itens esgotados aparecem bloqueados. Proteínas e complementos grátis são calculados por prato.</p>
+              </div>
+              <div id="portalItens" class="online-menu-list"></div>
+            </div>
+            <aside class="online-cart-card">
+              <div class="online-section-head">
+                <span class="online-section-label">Carrinho</span>
+                <h3>Seu pedido</h3>
+              </div>
+              <div id="portalResumo" class="summary empty-summary">Selecione itens para simular o pedido do cliente</div>
+              <button class="secondary full" onclick="App.adicionarPratoPortal()">Adicionar este prato ao pedido</button>
+              <button class="online-primary full" onclick="App.irParaCheckoutPortal()">Finalizar pedido</button>
+              <p class="muted">Use “Adicionar este prato” para pedidos com 2 ou mais pratos no mesmo cliente.</p>
+            </aside>
+          </div>
+
+          <div id="portalCheckout" class="online-checkout-card">
+            <div class="online-section-head">
+              <span class="online-section-label">Finalização</span>
+              <h3>Dados para confirmar o pedido</h3>
+              <p>Nome e WhatsApp são obrigatórios. Para delivery, confirme o endereço deste pedido.</p>
+            </div>
+            <div class="grid2 no-gap-mobile">
+              <div>
+                <div class="field"><label>WhatsApp *</label><input id="portalTelefoneFinal" placeholder="WhatsApp com DDD" oninput="App.sincronizarTelefonePortal('final')" onchange="App.buscarClientePortal(false)" required></div>
+                <div class="field"><label>Nome *</label><input id="portalCliente" placeholder="Nome do cliente" required></div>
+                <div class="row"><div class="field"><label>Tipo</label><select id="portalTipo" onchange="App.renderPortalCliente()"><option>Retirada</option><option>Delivery</option></select></div><div class="field"><label>Pagamento combinado</label><select id="portalPagamento"><option>PIX</option><option>Cartão</option><option>Dinheiro</option></select></div></div>
+                <div class="field"><label>Deseja talher?</label><select id="portalTalher"><option value="Não">Não</option><option value="Sim">Sim</option></select><small class="hint">Ajuda a evitar desperdício e organizar a entrega.</small></div>
+                <div id="portalEnderecoBox" class="hidden"><div class="field"><label>Endereço completo *</label><input id="portalEndereco" placeholder="Rua, número, complemento"></div><div class="field"><label>Bairro *</label><input id="portalBairro" placeholder="Bairro"></div><label class="check-line"><input id="portalConfirmaEndereco" type="checkbox"> Confirmo que este é o endereço correto para a entrega deste pedido.</label></div>
+                <div class="field"><label>Observação</label><textarea id="portalObs" placeholder="Ex: sem cebola, entregar no portão..."></textarea></div>
+              </div>
+              <div class="online-confirm-box">
+                <h4>Ao confirmar</h4>
+                <p>O pedido entra no Donas OS como <strong>Aguardando confirmação</strong> e a mensagem do WhatsApp fica pronta para enviar.</p>
+                <button class="primary full" onclick="App.criarPedidoPortal()">Criar pedido externo</button>
+                <button class="secondary full" onclick="App.limparPortalCliente()">Limpar portal</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="online-whatsapp-card">
+            <h3>Mensagem para WhatsApp</h3>
+            <p class="muted">Após criar o pedido, copie a mensagem abaixo ou use o link do WhatsApp gerado.</p>
+            <div id="portalWhatsapp" class="db-box">Nenhum pedido externo criado ainda.</div>
+          </div>
+
+          <div id="onlineFloatingCart" class="online-floating-cart hidden" aria-live="polite"></div>
+
+          <div class="online-bottom-nav" aria-label="Navegação Donas Online">
+            <button onclick="App.scrollPortalTo('page-portal')">🏠<span>Início</span></button>
+            <button onclick="App.scrollPortalTo('portalItens')">🍝<span>Cardápio</span></button>
+            <button onclick="App.scrollPortalTo('portalResumo')">🛒<span>Carrinho</span></button>
+            <button onclick="App.scrollPortalTo('portalCheckout')">👤<span>Dados</span></button>
+          </div>
+        </div>
+      </section>
+
+      <section id="page-config" class="page">
+        <div class="grid2">
+          <div class="card"><h3>Configurações da empresa</h3>
+            <div class="field"><label>Nome</label><input id="cfgNome"></div>
+            <div class="field"><label>Slogan</label><input id="cfgSlogan" placeholder="Seu macarrão. Seu jeito."></div>
+            <div class="row"><div class="field"><label>CNPJ</label><input id="cfgCnpj" placeholder="opcional"></div><div class="field"><label>E-mail</label><input id="cfgEmail" placeholder="opcional"></div></div>
+            <div class="field"><label>Endereço da empresa</label><input id="cfgEnderecoEmpresa" placeholder="opcional"></div>
+            <div class="field"><label>Instagram</label><input id="cfgInstagram"></div>
+            <div class="field"><label>PIX</label><input id="cfgPix"></div>
+            <div class="field"><label>WhatsApp da loja</label><input id="cfgWhatsapp" placeholder="Ex: 16997062305"><small class="hint">Use apenas números com DDD. Esse número será usado no botão do Portal Cliente.</small></div>
+            <div class="row"><div class="field"><label>Taxa entrega</label><input id="cfgTaxa" type="number" step="0.01"></div><div class="field"><label>Raio de entrega</label><input id="cfgRaioEntrega" placeholder="Ex: condomínio / 5 km"></div></div>
+            <div class="row"><div class="field"><label>Tempo médio de preparo (min)</label><input id="cfgTempoPreparo" type="number" min="0" placeholder="Ex: 20"></div><div class="field"><label>Complementos grátis</label><input id="cfgGratis" type="number"></div></div>
+            <div class="row"><div class="field"><label>Proteínas grátis</label><input id="cfgProteinasGratis" type="number" min="0" placeholder="Ex: 1"></div><div class="field"><label>Meta diária</label><input id="cfgMetaDiaria" type="number" step="0.01" placeholder="Ex: 1000"></div></div>
+            <div class="field"><label>Nome interno do sistema</label><input id="cfgNomeInterno" placeholder="Donas OS"></div>
+            <label class="check-line"><input id="cfgModoOperacao" type="checkbox"> Iniciar em modo operação</label>
+            <button class="primary full" onclick="App.salvarConfig()">Salvar configurações</button>
+          </div>
+          <div class="card"><h3>Banco de dados</h3><p class="muted">Esta versão usa LocalStorage, mas a camada de dados já foi isolada para futura integração com Supabase gratuito.</p><div class="db-box"><strong>Status:</strong> Local/offline<br><strong>Próximo:</strong> autenticação e tabelas Supabase<br><strong>Versão:</strong> 3.1 Portal Cliente Multi-pratos</div><button class="secondary full" onclick="App.restaurarUltimoSeguro()">Restaurar último ponto seguro</button></div>
+          <div class="card"><h3>Registro de ações</h3><p class="muted">Histórico interno para acompanhar criações, exclusões, pagamentos, backups e mudanças importantes.</p><div id="listaLogs" class="log-list"></div><button class="secondary full" onclick="App.limparLogs()">Limpar registros</button></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal" class="modal hidden"><div class="modal-card"><button class="modal-close" onclick="App.fecharModal()">×</button><div id="modalContent"></div></div></div>
+  <div id="toast"></div>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
