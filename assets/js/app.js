@@ -621,12 +621,35 @@ const App=(()=>{
       : `<div class="portal-hero-campaign" style="--banner-h:${altura}px">${banner.imagem?`<img src="${banner.imagem}" alt="${banner.titulo||'Campanha'}">`:''}<div><span class="pill">${banner.tipo||'Campanha'}</span><h3>${banner.titulo||''}</h3><p>${banner.descricao||''}</p>${banner.link?`<a href="${banner.link}" target="_blank">${banner.botao||'Saiba mais'}</a>`:''}</div></div>`;
     box.innerHTML=bannerHtml+(vitrine.length?`<div class="card portal-campaigns"><h3>Novidades, promoções e parceiros</h3><div class="campaign-grid">${vitrine.map(m=>`<div class="campaign-card">${m.imagem?`<img src="${m.imagem}" alt="${m.titulo||'Campanha'}">`:''}<div><span class="pill">${m.tipo||'Campanha'}</span><strong>${m.titulo||''}</strong><small>${m.descricao||''}</small>${m.link?`<a href="${m.link}" target="_blank">${m.botao||'Saiba mais'}</a>`:''}</div></div>`).join('')}</div></div>`:'');
   }
+
+  function renderAvisoLojaFechada(aberta){
+    let box=el('portalClosedNotice');
+    const frame=document.querySelector('.online-phone-frame');
+    if(!frame)return;
+    if(!box){
+      box=document.createElement('div');
+      box.id='portalClosedNotice';
+      box.className='portal-closed-notice hidden';
+      frame.prepend(box);
+    }
+    if(aberta){box.classList.add('hidden');box.innerHTML='';return;}
+    const w=norm(db.config.whatsapp||'');
+    const insta=(db.config.instagram||'').trim().replace(/^@/,'');
+    const contatos=[
+      w?`<a href="https://wa.me/55${w}" target="_blank">📲 Fale conosco pelo WhatsApp</a>`:'',
+      insta?`<a href="https://instagram.com/${insta}" target="_blank">📷 Acompanhe nosso Instagram</a>`:''
+    ].filter(Boolean).join('');
+    box.classList.remove('hidden');
+    box.innerHTML=`<div class="portal-closed-card"><button class="portal-closed-close" onclick="document.getElementById('portalClosedNotice')?.classList.add('hidden')">×</button><strong>🍝 No momento estamos fechados</strong><p>Nosso cardápio continua disponível para consulta.<br>Assim que abrirmos, você poderá realizar seu pedido por aqui.</p>${contatos?`<div class="portal-closed-links">${contatos}</div>`:''}</div>`;
+  }
+
   function renderPortalCliente(){
     const status=el('portalLojaStatus');if(!status)return;
     const loja=horarioAtualLoja();
     const aberta=loja.aberta;
     status.className='online-store-status '+(aberta?'open':'closed');
     status.innerHTML=aberta?'🟢 Loja aberta':'🔴 Loja fechada';
+    renderAvisoLojaFechada(aberta);
     if(el('onlineTempoPreparo'))el('onlineTempoPreparo').textContent='Preparo médio: '+Number(db.config.tempoPreparo||20)+' min';
     if(el('onlineWelcomeText'))el('onlineWelcomeText').textContent=aberta?'Veja o cardápio sem cadastro. Para pedir, monte seu prato e confirme seus dados no final.':'Estamos fechados para novos pedidos, mas você pode conhecer o cardápio e planejar seu próximo macarrão.';
     if(el('portalTelefoneFinal')&&val('portalTelefoneFinal')!==val('portalTelefone'))el('portalTelefoneFinal').value=val('portalTelefone');
@@ -646,7 +669,7 @@ const App=(()=>{
       }
     }
     const current=aberta?portalCurrentPrato():null;const pratos=portalPedidoCompleto();const entrega=(val('portalTipo')==='Delivery'?Number(db.config.taxaEntrega||0):0);const total=pratos.reduce((a,p)=>a+Number(p.total||0),0)+entrega;
-    const resumo=el('portalResumo');if(resumo){if(!aberta){resumo.className='summary empty-summary';resumo.innerHTML='<strong>Loja fechada.</strong><br>Abra a loja em Online Ready para aceitar pedidos externos.'}else if(!pratos.length){resumo.className='summary empty-summary';resumo.textContent='Selecione itens para simular o pedido do cliente'}else{resumo.className='summary';resumo.innerHTML=pratos.map((pr,idx)=>`<div class="summary-block"><div class="summary-item"><strong>${pr.nome}${idx===portalPratos.length&&current?' (em montagem)':''}</strong>${idx<portalPratos.length?`<button class="mini danger" onclick="App.removerPratoPortal('${pr.id}')">Remover</button>`:''}</div>${(pr.itens||[]).map(i=>`<div class="summary-item"><div><strong>${i.nome}</strong><br><small>${i.categoria} • ${i.qtdUsada} ${i.unidade||'un'}${(i.categoria==='Complemento'||i.categoria==='Proteína')?` • ${i.porcoesGratis||0} grátis / ${i.porcoesPagas||0} paga(s)`:''}</small></div><span class="${i.valorCobrado===0?'discount':''}">${i.valorCobrado===0?'Grátis':fmt(i.valorCobrado)}</span></div>`).join('')}<div class="summary-item"><small>Subtotal</small><strong>${fmt(pr.total||0)}</strong></div></div>`).join('')+(entrega?`<div class="summary-item"><strong>Entrega</strong><strong>${fmt(entrega)}</strong></div>`:'')+`<div class="summary-item total-line"><strong>Total previsto</strong><strong>${fmt(total)}</strong></div>`}}
+    const resumo=el('portalResumo');if(resumo){if(!aberta){resumo.className='summary empty-summary';const w=norm(db.config.whatsapp||'');const insta=(db.config.instagram||'').trim().replace(/^@/,'');const contatos=[w?`<a class="inline-link" href="https://wa.me/55${w}" target="_blank">📲 Fale conosco pelo WhatsApp</a>`:'',insta?`<a class="inline-link" href="https://instagram.com/${insta}" target="_blank">📷 Acompanhe nosso Instagram</a>`:''].filter(Boolean).join('<br>');resumo.innerHTML='<strong>🍝 No momento estamos fechados</strong><br><br>Nosso cardápio continua disponível para consulta.<br>Assim que abrirmos, você poderá realizar seu pedido por aqui.'+(contatos?'<br><br>'+contatos:'')}else if(!pratos.length){resumo.className='summary empty-summary';resumo.textContent='Selecione itens para simular o pedido do cliente'}else{resumo.className='summary';resumo.innerHTML=pratos.map((pr,idx)=>`<div class="summary-block"><div class="summary-item"><strong>${pr.nome}${idx===portalPratos.length&&current?' (em montagem)':''}</strong>${idx<portalPratos.length?`<button class="mini danger" onclick="App.removerPratoPortal('${pr.id}')">Remover</button>`:''}</div>${(pr.itens||[]).map(i=>`<div class="summary-item"><div><strong>${i.nome}</strong><br><small>${i.categoria} • ${i.qtdUsada} ${i.unidade||'un'}${(i.categoria==='Complemento'||i.categoria==='Proteína')?` • ${i.porcoesGratis||0} grátis / ${i.porcoesPagas||0} paga(s)`:''}</small></div><span class="${i.valorCobrado===0?'discount':''}">${i.valorCobrado===0?'Grátis':fmt(i.valorCobrado)}</span></div>`).join('')}<div class="summary-item"><small>Subtotal</small><strong>${fmt(pr.total||0)}</strong></div></div>`).join('')+(entrega?`<div class="summary-item"><strong>Entrega</strong><strong>${fmt(entrega)}</strong></div>`:'')+`<div class="summary-item total-line"><strong>Total previsto</strong><strong>${fmt(total)}</strong></div>`}}
     renderOnlineFloatingCart(pratos,total,aberta,current);
   }
   function renderOnlineFloatingCart(pratos,total,aberta,current){const bar=el('onlineFloatingCart');if(!bar)return;const qtd=(pratos||[]).length;if(!aberta||!qtd){bar.classList.add('hidden');bar.innerHTML='';return;}const finalizados=portalPratos.length;const emMontagem=current?1:0;const label=qtd===1?'1 item no pedido':`${qtd} itens no pedido`;const detalhe=[finalizados?`${finalizados} salvo(s) no carrinho`:null,emMontagem?'1 em montagem':null].filter(Boolean).join(' • ')||'Revise antes de finalizar';bar.classList.remove('hidden');bar.innerHTML=`<div><strong>🛒 ${label} • ${fmt(total)}</strong><small>${detalhe}</small></div><button onclick="App.scrollPortalTo('portalCheckout')">Finalizar</button>`;}
@@ -698,7 +721,7 @@ const App=(()=>{
     return '';
   }
   function criarPedidoPortal(){
-    if(!horarioAtualLoja().aberta)return toast('Loja online está fechada. Abra em Online Ready para aceitar pedidos externos.');
+    if(!horarioAtualLoja().aberta)return toast('No momento estamos fechados para novos pedidos. O cardápio segue disponível para consulta.');
     const erro=validarDadosPortal();if(erro)return toast(erro);
     const pratos=portalPedidoCompleto();if(!pratos.length)return toast('Selecione ao menos um item no portal');
     const itens=portalFlattenItens(pratos);

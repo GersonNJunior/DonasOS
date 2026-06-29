@@ -1,4 +1,4 @@
-Donas OS 1.0.0 - Produção GO LIVE
+Donas OS 1.0.3 - Produção GO LIVE
 
 Versão oficial homologada para publicação online da Donas da Massa.
 

@@ -254,3 +254,11 @@ body.public-client .online-phone-frame{max-width:760px;margin:0 auto;padding:12p
 body.public-client .online-whatsapp-card{scroll-margin-top:18px;}
 body.public-client .qty-inline{font-size:11px;}
 @media(min-width:900px){body.public-client .online-phone-frame{max-width:780px;} body.public-client .online-layout{grid-template-columns:1fr!important;} body.public-client .online-cart-card{position:static!important;}}
+
+
+/* GO LIVE 1.0.3 - mensagem pública de loja fechada */
+.portal-closed-notice{position:fixed;inset:0;display:grid;place-items:center;padding:18px;background:rgba(42,18,22,.42);z-index:120;backdrop-filter:blur(3px)}
+.portal-closed-notice.hidden{display:none!important}
+.portal-closed-card{width:min(440px,calc(100% - 34px));background:linear-gradient(135deg,#fffaf3,#fff1dc);border:1px solid #e0bd91;border-radius:28px;box-shadow:0 28px 80px rgba(50,20,14,.28);padding:28px 22px;text-align:center;color:#4a171f;position:relative}
+.portal-closed-card strong{display:block;font-size:22px;margin-bottom:12px;color:#4a171f}.portal-closed-card p{margin:0;color:#6b4e3e;line-height:1.55}.portal-closed-links{display:grid;gap:10px;margin-top:18px}.portal-closed-links a{display:block;text-decoration:none;border-radius:18px;background:#6f1d2b;color:#fff;font-weight:900;padding:12px 14px}.portal-closed-close{position:absolute;right:12px;top:10px;width:34px;height:34px;border:0;border-radius:999px;background:#f0d7b9;color:#5d1a27;font-size:24px;line-height:30px;cursor:pointer;font-weight:900}
+body.public-client .empty-summary strong{color:#4a171f;font-size:17px}body.public-client .empty-summary .inline-link{display:block;margin-top:8px;color:#6f1d2b;font-weight:900;text-decoration:none}

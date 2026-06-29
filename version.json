@@ -1,7 +1,7 @@
 {
-  "version": "1.0.1",
-  "name": "Donas OS 1.0.1 - GO LIVE público/admin",
+  "version": "1.0.3",
+  "name": "Donas OS GO LIVE",
   "date": "2026-06-29",
   "status": "release-candidate",
-  "notes": "Separa o acesso público do cliente do painel administrativo. Link sem parâmetros abre apenas Donas Online; painel interno fica em ?admin=1. Ajusta fluxo de WhatsApp no pedido online."
+  "notes": "Mensagem pública de loja fechada"
 }
