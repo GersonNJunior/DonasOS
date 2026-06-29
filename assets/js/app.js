@@ -1,5 +1,12 @@
 const App=(()=>{
   const KEY='donasDaMassaStudio_v11';
+  const SUPABASE_DEFAULT_URL='https://dhhydjqhvnbxgfxwevpo.supabase.co';
+  const SUPABASE_DEFAULT_KEY='sb_publishable_Nb7k0jdnUgyJGnWnYrCOtA_ruhlT3Bv';
+  const SUPABASE_REST=()=>((db?.sync?.supabaseUrl)||SUPABASE_DEFAULT_URL).replace(/\/rest\/v1\/?$/,'').replace(/\/$/,'')+'/rest/v1';
+  const SUPABASE_KEY=()=>((db?.sync?.supabaseAnonKey)||SUPABASE_DEFAULT_KEY).trim();
+  let supabaseLojaId=null;
+  let supabaseBusy=false;
+  let supabaseLastLoad=0;
   const OLDS=['donasDaMassaStudio_v10','donasDaMassaStudio_v09','donasDaMassaStudio_v08','donasDaMassaStudio_v07','donasDaMassaStudio_v06','donasDaMassaStudio_v05'];
   const fmt=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
   const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
@@ -39,7 +46,7 @@ const App=(()=>{
       modoBanner:m.modoBanner||'informativo',
       alturaBanner:m.alturaBanner||260
     }));x.favoritos=x.favoritos||[];x.compras=x.compras||[];x.receitas=x.receitas||[];x.producoes=x.producoes||[];x.mural=x.mural||[];x.fechamentos=x.fechamentos||[];x.logs=x.logs||[];
-    x.sync={modo:'local',status:'offline',fila:[],lastSync:'',supabaseUrl:'',supabaseAnonKey:'',lojaAberta:false,horarioModo:'manual',horarios:{sex:{ativo:true,inicio:'18:00',fim:'23:00'},sab:{ativo:true,inicio:'18:00',fim:'23:00'},dom:{ativo:true,inicio:'18:00',fim:'22:00'}},...(x.sync||{})};x.sync.horarios={sex:{ativo:true,inicio:'18:00',fim:'23:00'},sab:{ativo:true,inicio:'18:00',fim:'23:00'},dom:{ativo:true,inicio:'18:00',fim:'22:00'},...(x.sync.horarios||{})};
+    x.sync={modo:'online',status:'supabase beta',fila:[],lastSync:'',supabaseUrl:SUPABASE_DEFAULT_URL,supabaseAnonKey:SUPABASE_DEFAULT_KEY,lojaAberta:false,horarioModo:'manual',horarios:{sex:{ativo:true,inicio:'18:00',fim:'23:00'},sab:{ativo:true,inicio:'18:00',fim:'23:00'},dom:{ativo:true,inicio:'18:00',fim:'22:00'}},...(x.sync||{})};x.sync.horarios={sex:{ativo:true,inicio:'18:00',fim:'23:00'},sab:{ativo:true,inicio:'18:00',fim:'23:00'},dom:{ativo:true,inicio:'18:00',fim:'22:00'},...(x.sync.horarios||{})};
     x.itens=x.itens.map(i=>({...i,onlineId:i.onlineId||onlineId('ITEM'),updatedAt:i.updatedAt||new Date().toISOString(),syncStatus:i.syncStatus||'local'}));
     x.clientes=x.clientes.map(c=>({...c,onlineId:c.onlineId||onlineId('CLI'),updatedAt:c.updatedAt||new Date().toISOString(),syncStatus:c.syncStatus||'local'}));
     x.compras=x.compras.map(c=>({...c,onlineId:c.onlineId||onlineId('COMP'),updatedAt:c.updatedAt||new Date().toISOString(),syncStatus:c.syncStatus||'local'}));
@@ -125,9 +132,9 @@ const App=(()=>{
   function finalizarPedido(){syncPedido();let pratos=[...pedido.pratos];const atual=currentPrato();if(atual.itens.length){if(!validarPrato(selectedItems()))return;pratos.push(atual)}if(!pratos.length)return toast('Adicione ao menos um prato ao pedido');const todos=pratos.flatMap(p=>p.itens);for(const i of todos){const item=db.itens.find(x=>x.id===i.id);if(!item||Number(item.estoque||0)<Number(i.qtdUsada||1))return toast('Estoque insuficiente: '+i.nome)}const subtotal=pratos.reduce((a,p)=>a+p.total,0);const entrega=pedido.tipo==='Delivery'?Number(db.config.taxaEntrega||0):0;const custo=pratos.reduce((a,p)=>a+p.custo,0);const numero=pedido.editandoNumero||String(db.pedidos.length+1).padStart(4,'0');const p={id:pedido.editandoId||uid(),numero,cliente:pedido.cliente||'Cliente balcão',telefone:pedido.telefone,tipo:pedido.tipo,pagamento:'',pagamentoPrevisto:pedido.pagamentoPrevisto||'PIX',obs:pedido.obs,endereco:pedido.endereco,bairro:pedido.bairro,clienteId:pedido.clienteId||'',pratos,itens:todos,total:subtotal+entrega,custo,lucro:subtotal+entrega-custo,status:'Pedido Feito',financeiroLancado:false,estoqueBaixado:true,origem:'interno',data:new Date().toISOString(),timeline:[{status:pedido.editandoNumero?'Pedido editado':'Pedido Feito',data:new Date().toISOString()}]};db.pedidos.unshift(p);log(pedido.editandoNumero?'Pedido editado':'Pedido criado','#'+p.numero+' • '+fmt(p.total));baixarEstoque(todos);editBuffer=null;salvarClienteAutomatico(p);limparPedido(false);save();toast(pedido.editandoNumero?'Pedido editado e reenviado para produção.':'Pedido registrado. Aguardando preparo e pagamento.')}
   function salvarClienteAutomatico(p){if(p.clienteId)return;if(!p.telefone&&!p.cliente)return;const tel=norm(p.telefone);const existe=db.clientes.find(c=>tel&&norm(c.telefone)===tel);if(existe)return;db.clientes.push({id:uid(),nome:p.cliente,telefone:p.telefone,endereco:p.endereco,bairro:p.bairro,obs:'Criado automaticamente por pedido',createdAt:new Date().toISOString()})}
   function limparPedido(show=true){if(show&&editBuffer){if(confirm('Cancelar edição e restaurar o pedido original?')){db.pedidos.unshift(editBuffer.pedido);if(editBuffer.financeiro)db.financeiro.unshift(editBuffer.financeiro);baixarEstoque(editBuffer.pedido.itens||[]);log('Edição cancelada','#'+editBuffer.pedido.numero);editBuffer=null}else{return}}pedido=novoPedido();['clientePedido','telefonePedido','obsPedido','enderecoPedido','bairroPedido'].forEach(id=>{if(el(id))el(id).value=''});if(el('tipoPedido'))el('tipoPedido').value='Balcão';if(el('pagamentoPedido'))el('pagamentoPedido').value='PIX';const box=el('clientesEncontrados');if(box){box.className='client-results hidden';box.innerHTML=''}renderAll();if(show)toast('Pedido limpo')}
-  function atualizarStatus(id,status){const p=db.pedidos.find(x=>x.id===id);if(!p)return;if(status==='Entregue'){abrirPagamento(id);return}p.status=status;p.timeline=p.timeline||[];p.timeline.push({status,data:new Date().toISOString()});save();toast('Status atualizado: '+status)}
+  function atualizarStatus(id,status){const p=db.pedidos.find(x=>x.id===id);if(!p)return;if(status==='Entregue'){abrirPagamento(id);return}p.status=status;p.timeline=p.timeline||[];p.timeline.push({status,data:new Date().toISOString()});save();supabaseAtualizarPedido(p);toast('Status atualizado: '+status)}
   function abrirPagamento(id){const p=db.pedidos.find(x=>x.id===id);if(!p)return;el('modalContent').innerHTML=`<div class="receipt"><h2>Finalizar Pedido #${p.numero}</h2><p class="muted">Forma prevista: <b>${p.pagamentoPrevisto||'PIX'}</b>. Confirme ou altere abaixo. Só depois disso entra no financeiro.</p><div class="field"><label>Forma de pagamento</label><select id="pagamentoFinal">${PAGAMENTOS.map(pg=>`<option ${pg===(p.pagamento||p.pagamentoPrevisto||'PIX')?'selected':''}>${pg}</option>`).join('')}</select></div><div class="summary-item"><strong>Total</strong><strong>${fmt(p.total)}</strong></div><button class="primary full" onclick="App.confirmarPagamento('${id}')">Confirmar pagamento e entregar</button><button class="secondary full" onclick="App.fecharModal()">Cancelar</button></div>`;el('modal').classList.remove('hidden')}
-  function confirmarPagamento(id){const p=db.pedidos.find(x=>x.id===id);if(!p)return;const pg=val('pagamentoFinal')||'PIX';p.status='Entregue';p.pagamento=pg;p.timeline=p.timeline||[];p.timeline.push({status:'Entregue',data:new Date().toISOString(),pagamento:pg});if(!p.financeiroLancado){db.financeiro.unshift({id:uid(),tipo:'entrada',desc:'Pedido #'+p.numero+' ('+pg+')',valor:p.total,data:new Date().toISOString(),origem:'pedido',pedidoId:p.id});p.financeiroLancado=true;p.dataPagamento=new Date().toISOString()}save();fecharModal();toast('Pedido entregue e contabilizado')}
+  function confirmarPagamento(id){const p=db.pedidos.find(x=>x.id===id);if(!p)return;const pg=val('pagamentoFinal')||'PIX';p.status='Entregue';p.pagamento=pg;p.timeline=p.timeline||[];p.timeline.push({status:'Entregue',data:new Date().toISOString(),pagamento:pg});if(!p.financeiroLancado){db.financeiro.unshift({id:uid(),tipo:'entrada',desc:'Pedido #'+p.numero+' ('+pg+')',valor:p.total,data:new Date().toISOString(),origem:'pedido',pedidoId:p.id});p.financeiroLancado=true;p.dataPagamento=new Date().toISOString()}save();supabaseAtualizarPedido(p);fecharModal();toast('Pedido entregue e contabilizado')}
   function excluirPedido(id){const p=db.pedidos.find(x=>x.id===id);if(!p)return;el('modalContent').innerHTML=`<div class="receipt"><h2>Excluir Pedido #${p.numero}</h2><p class="muted">A exclusão também remove a entrada financeira deste pedido, caso ela já tenha sido contabilizada.</p><label class="check-line"><input id="excluirSemRetorno" type="checkbox"> Foi devolução/perda/erro depois do preparo. Não devolver itens ao estoque.</label><button class="danger-btn full" onclick="App.confirmarExcluirPedido('${id}')">Excluir pedido</button><button class="secondary full" onclick="App.fecharModal()">Cancelar</button></div>`;el('modal').classList.remove('hidden')}
   function confirmarExcluirPedido(id){const p=db.pedidos.find(x=>x.id===id);if(!p)return;const semRetorno=!!el('excluirSemRetorno')?.checked;if(!semRetorno){(p.itens||[]).forEach(i=>{const item=db.itens.find(x=>x.id===i.id);if(item)item.estoque=Number(item.estoque||0)+Number(i.qtdUsada||1)})}db.financeiro=db.financeiro.filter(m=>m.pedidoId!==id);db.pedidos=db.pedidos.filter(x=>x.id!==id);log('Pedido excluído','#'+p.numero+(semRetorno?' • sem retorno ao estoque':' • estoque devolvido'));save();fecharModal();toast(semRetorno?'Pedido excluído sem retorno de estoque':'Pedido excluído e estoque restaurado')}
 
@@ -548,6 +555,108 @@ const App=(()=>{
   }
 
 
+
+  function supabaseHeaders(extra={}){return {'apikey':SUPABASE_KEY(),'Authorization':'Bearer '+SUPABASE_KEY(),'Content-Type':'application/json',...extra}}
+  function supabaseAtivo(){return !!SUPABASE_KEY() && !!SUPABASE_REST()}
+  async function supabaseRequest(path,opts={}){
+    if(!supabaseAtivo())throw new Error('Supabase não configurado');
+    const res=await fetch(SUPABASE_REST()+path,{...opts,headers:{...supabaseHeaders(opts.headers||{})}});
+    const txt=await res.text();
+    if(!res.ok)throw new Error(txt||('Erro Supabase '+res.status));
+    try{return txt?JSON.parse(txt):null}catch(e){return txt}
+  }
+  async function supabaseGetLoja(){
+    if(supabaseLojaId)return supabaseLojaId;
+    const lojas=await supabaseRequest('/lojas?select=*&limit=1');
+    let loja=Array.isArray(lojas)?lojas[0]:null;
+    if(!loja){
+      const criada=await supabaseRequest('/lojas?select=*',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({nome:db.config.nome||'Donas da Massa',slogan:db.config.slogan||'Seu macarrão. Seu jeito.'})});
+      loja=criada?.[0];
+    }
+    if(loja){
+      supabaseLojaId=loja.id;
+      if(loja.nome)db.config.nome=loja.nome;
+      if(loja.slogan)db.config.slogan=loja.slogan;
+      if(loja.whatsapp!==null&&loja.whatsapp!==undefined)db.config.whatsapp=loja.whatsapp||db.config.whatsapp||'';
+      if(loja.instagram!==null&&loja.instagram!==undefined)db.config.instagram=loja.instagram||db.config.instagram||'';
+      if(loja.pix!==null&&loja.pix!==undefined)db.config.pix=loja.pix||db.config.pix||'';
+      if(loja.loja_aberta!==undefined)db.sync.lojaAberta=!!loja.loja_aberta;
+    }
+    return supabaseLojaId;
+  }
+  async function supabaseSalvarLoja(){
+    try{
+      const loja_id=await supabaseGetLoja(); if(!loja_id)return;
+      await supabaseRequest('/lojas?id=eq.'+encodeURIComponent(loja_id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({nome:db.config.nome||'Donas da Massa',slogan:db.config.slogan||'Seu macarrão. Seu jeito.',whatsapp:db.config.whatsapp||'',instagram:db.config.instagram||'',pix:db.config.pix||'',loja_aberta:!!db.sync.lojaAberta})});
+      db.sync.status='online';db.sync.lastSync=new Date().toISOString();Data.save(db);
+    }catch(e){console.warn('Supabase loja:',e);db.sync.status='erro ao salvar loja'}
+  }
+  function mapPedidoSupabase(row,itens=[],cliente=null){
+    const data=row.criado_em||row.created_at||new Date().toISOString();
+    const numero=(row.codigo||'').split('-').pop()||String((db.pedidos||[]).length+1).padStart(4,'0');
+    const mappedItens=(itens||[]).map(i=>({id:i.id,nome:i.nome,tipo:i.tipo,categoria:i.tipo,quantidade:i.quantidade,qtdUsada:Number(i.quantidade||1),unidade:'un',preco:Number(i.preco||0),valorCobrado:Number(i.preco||0)}));
+    return {id:'sb_'+row.id,supabase_id:row.id,onlineId:row.codigo||row.id,numero,cliente:cliente?.nome||row.cliente_nome||'Cliente online',telefone:cliente?.telefone||row.cliente_telefone||'',tipo:row.tipo_entrega==='delivery'?'Delivery':'Balcão',pagamento:'',pagamentoPrevisto:row.forma_pagamento||'PIX',talher:row.talher?'Sim':'Não',obs:row.observacao||'',endereco:cliente?.endereco||'',bairro:cliente?.bairro||'',clienteId:cliente?.id||'',pratos:[{id:'pr_'+row.id,nome:'Pedido online',itens:mappedItens,total:Number(row.valor_total||0),custo:0}],itens:mappedItens,total:Number(row.valor_total||0),custo:0,lucro:Number(row.valor_total||0),status:({aguardando_confirmacao:'Aguardando confirmação',pedido_feito:'Pedido Feito',preparando:'Preparando',pedido_pronto:'Pedido Pronto',entregue:'Entregue'}[row.status]||row.status||'Aguardando confirmação'),financeiroLancado:row.status==='entregue',estoqueBaixado:false,origem:'supabase',data,timeline:[{status:'Importado do Supabase',data}],syncStatus:'sincronizado'};
+  }
+  async function supabaseCarregarPedidos(){
+    if(supabaseBusy)return; supabaseBusy=true;
+    try{
+      await supabaseGetLoja();
+      const rows=await supabaseRequest('/pedidos?select=*&order=criado_em.desc&limit=80');
+      const ids=(rows||[]).map(r=>r.id);
+      let itens=[];let clientes=[];
+      if(ids.length){
+        itens=await supabaseRequest('/pedido_itens?select=*&pedido_id=in.('+ids.join(',')+')');
+        const cids=[...new Set((rows||[]).map(r=>r.cliente_id).filter(Boolean))];
+        if(cids.length)clientes=await supabaseRequest('/clientes?select=*&id=in.('+cids.join(',')+')');
+      }
+      let novos=0;
+      (rows||[]).forEach(r=>{
+        if((db.pedidos||[]).some(p=>p.supabase_id===r.id||p.onlineId===r.codigo))return;
+        const pi=itens.filter(i=>i.pedido_id===r.id);
+        const cli=clientes.find(c=>c.id===r.cliente_id)||null;
+        db.pedidos.unshift(mapPedidoSupabase(r,pi,cli));novos++;
+      });
+      if(novos){db.pedidos.sort((a,b)=>new Date(b.data||0)-new Date(a.data||0));Data.save(db);renderAll();toast(novos+' pedido(s) online recebido(s)');}
+      db.sync.status='online';db.sync.lastSync=new Date().toISOString();Data.save(db);
+    }catch(e){console.warn('Supabase pedidos:',e);db.sync.status='erro: '+String(e.message||e).slice(0,90);Data.save(db)}
+    finally{supabaseBusy=false;supabaseLastLoad=Date.now()}
+  }
+  async function supabaseSalvarClientePedido(p){
+    await supabaseGetLoja();
+    const tel=norm(p.telefone||'');
+    let existente=null;
+    if(tel){
+      try{const found=await supabaseRequest('/clientes?select=*&telefone=eq.'+encodeURIComponent(tel)+'&limit=1');existente=found?.[0]||null;}catch(e){}
+    }
+    const payload={loja_id:supabaseLojaId,nome:p.cliente||'Cliente',telefone:tel,endereco:p.endereco||'',bairro:p.bairro||'',observacao:p.obs||''};
+    if(existente){await supabaseRequest('/clientes?id=eq.'+encodeURIComponent(existente.id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});return existente.id;}
+    const created=await supabaseRequest('/clientes?select=*',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});
+    return created?.[0]?.id||null;
+  }
+  function statusParaSupabase(st){return {'Aguardando confirmação':'aguardando_confirmacao','Pedido Feito':'pedido_feito','Preparando':'preparando','Pedido Pronto':'pedido_pronto','Entregue':'entregue'}[st]||'aguardando_confirmacao'}
+  async function supabaseEnviarPedido(p){
+    try{
+      const loja_id=await supabaseGetLoja();
+      const cliente_id=await supabaseSalvarClientePedido(p);
+      const codigo=p.onlineId||('DM-'+hoje().replace(/-/g,'')+'-'+(p.numero||uid()));
+      const payload={loja_id,cliente_id,codigo,tipo_entrega:(p.tipo==='Delivery'?'delivery':'retirada'),status:statusParaSupabase(p.status||'Aguardando confirmação'),forma_pagamento:p.pagamentoPrevisto||'PIX',talher:(p.talher==='Sim'||p.talher===true),observacao:p.obs||'',valor_total:Number(p.total||0)};
+      const created=await supabaseRequest('/pedidos?select=*',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});
+      const row=created?.[0]; if(!row)throw new Error('Pedido sem retorno do Supabase');
+      p.supabase_id=row.id;p.onlineId=row.codigo;p.syncStatus='sincronizado';
+      const itens=(p.itens||[]).map(i=>({pedido_id:row.id,tipo:i.categoria||i.tipo||'Item',nome:i.nome,quantidade:Number(i.qtdUsada||i.quantidade||1),preco:Number(i.valorCobrado??i.preco??0),observacao:''}));
+      if(itens.length)await supabaseRequest('/pedido_itens',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(itens)});
+      db.sync.status='online';db.sync.lastSync=new Date().toISOString();Data.save(db);
+      return true;
+    }catch(e){console.warn('Erro ao enviar pedido Supabase:',e);p.syncStatus='erro';p.syncErro=String(e.message||e);db.sync.status='erro ao enviar pedido';Data.save(db);return false;}
+  }
+  async function supabaseAtualizarPedido(p){
+    if(!p?.supabase_id)return;
+    try{await supabaseRequest('/pedidos?id=eq.'+encodeURIComponent(p.supabase_id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status:statusParaSupabase(p.status),forma_pagamento:p.pagamento||p.pagamentoPrevisto||'PIX',valor_total:Number(p.total||0)})});}catch(e){console.warn('Update pedido Supabase:',e)}
+  }
+  async function supabaseInicializar(){
+    try{await supabaseGetLoja();await supabaseCarregarPedidos();setInterval(()=>{if(!isPublicClient())supabaseCarregarPedidos()},8000);}catch(e){console.warn('Supabase init:',e)}
+  }
+
   function renderOnlineReady(){
     if(!el('onlineStatus'))return;
     const sync=db.sync||{modo:'local',status:'offline',fila:[]};
@@ -574,7 +683,7 @@ const App=(()=>{
     db.sync.status=db.sync.modo==='online'?'preparado':'offline';
     db.sync.updatedAt=new Date().toISOString();
     log('Configuração online atualizada',db.sync.modo+' • loja '+(db.sync.lojaAberta?'aberta':'fechada'));
-    save();toast('Configuração Online Ready salva');
+    save();supabaseSalvarLoja();toast('Configuração Online Ready salva');
   }
   function prepararIdsOnline(){
     ['pedidos','clientes','itens','compras','receitas','producoes'].forEach(k=>{(db[k]||[]).forEach(x=>{if(!x.onlineId)x.onlineId=onlineId(k.slice(0,4).toUpperCase());x.updatedAt=x.updatedAt||new Date().toISOString();x.syncStatus=x.syncStatus||'local';});});
@@ -720,7 +829,7 @@ const App=(()=>{
     }
     return '';
   }
-  function criarPedidoPortal(){
+  async function criarPedidoPortal(){
     if(!horarioAtualLoja().aberta)return toast('No momento estamos fechados para novos pedidos. O cardápio segue disponível para consulta.');
     const erro=validarDadosPortal();if(erro)return toast(erro);
     const pratos=portalPedidoCompleto();if(!pratos.length)return toast('Selecione ao menos um item no portal');
@@ -730,6 +839,8 @@ const App=(()=>{
     const numero=String(db.pedidos.length+1).padStart(4,'0');
     const p={id:uid(),onlineId:onlineId('PED'),numero,cliente,telefone,tipo:tipo==='Retirada'?'Balcão':tipo,pagamento:'',pagamentoPrevisto:val('portalPagamento')||'PIX',talher,obs:val('portalObs'),endereco:val('portalEndereco').trim(),bairro:val('portalBairro').trim(),clienteId:portalClienteIdentificado?.id||'',pratos:pratos.map((pr,idx)=>({...pr,nome:pr.nome||('Prato '+(idx+1))})),itens,total,custo,lucro:total-custo,status:'Aguardando confirmação',financeiroLancado:false,estoqueBaixado:false,origem:'portal-local',data:new Date().toISOString(),timeline:[{status:'Aguardando confirmação',data:new Date().toISOString()}],syncStatus:'local'};
     db.pedidos.unshift(p);salvarClienteAutomatico(p);log('Pedido externo recebido','#'+p.numero+' • aguardando confirmação');save();
+    const enviadoSupabase=await supabaseEnviarPedido(p);
+    if(enviadoSupabase){log('Pedido sincronizado no Supabase','#'+p.numero);}
     const msg=mensagemWhatsPedido(p,itens,total);
     const whats=whatsappUrl(msg);
     window._ultimaMensagemPortal=msg;
@@ -739,12 +850,12 @@ const App=(()=>{
     toast('Pedido criado. Abrindo WhatsApp...')
   }
   function copiarMensagemPortal(){copiarTexto(window._ultimaMensagemPortal||'')}
-  function confirmarPedidoPortal(id){const p=db.pedidos.find(x=>x.id===id);if(!p)return;for(const i of (p.itens||[])){const item=db.itens.find(x=>x.id===i.id);if(!item||Number(item.estoque||0)<Number(i.qtdUsada||1))return toast('Estoque insuficiente: '+i.nome)}if(!p.estoqueBaixado){baixarEstoque(p.itens||[]);p.estoqueBaixado=true}p.status='Pedido Feito';p.timeline=p.timeline||[];p.timeline.push({status:'Pedido Feito',data:new Date().toISOString(),detalhes:'Pedido externo confirmado'});log('Pedido externo confirmado','#'+p.numero);save();toast('Pedido confirmado e enviado para preparo')}
+  function confirmarPedidoPortal(id){const p=db.pedidos.find(x=>x.id===id);if(!p)return;for(const i of (p.itens||[])){const item=db.itens.find(x=>x.id===i.id);if(!item||Number(item.estoque||0)<Number(i.qtdUsada||1))return toast('Estoque insuficiente: '+i.nome)}if(!p.estoqueBaixado){baixarEstoque(p.itens||[]);p.estoqueBaixado=true}p.status='Pedido Feito';p.timeline=p.timeline||[];p.timeline.push({status:'Pedido Feito',data:new Date().toISOString(),detalhes:'Pedido externo confirmado'});log('Pedido externo confirmado','#'+p.numero);save();supabaseAtualizarPedido(p);toast('Pedido confirmado e enviado para preparo')}
 
   function renderAll(){renderSelects();renderFavoritos();renderSteps();renderResumo();renderListas();renderDashboard();renderConfig();renderInsights();renderRelatorios();renderOnlineReady();renderPortalCliente();renderOperacao()}
   function init(){try{const q=new URLSearchParams(location.search);if(!q.has('admin')&&!String(location.hash||'').includes('admin'))document.body.classList.add('public-client');else document.body.classList.add('admin-mode');}catch(e){document.body.classList.add('public-client')}document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>page(b.dataset.page)));['clientePedido','tipoPedido','pagamentoPedido','obsPedido','enderecoPedido','bairroPedido'].forEach(id=>{if(el(id))el(id).addEventListener('input',renderResumo)});
     if(el('producaoQtd')) el('producaoQtd').addEventListener('input',()=>{renderProducao();});
-    if(el('producaoReceita')) el('producaoReceita').addEventListener('change',()=>{renderProducao();});if(el('telefonePedido')){el('telefonePedido').addEventListener('input',()=>{renderResumo();buscarClientesPedido()})}if(el('portalTelefone')){el('portalTelefone').addEventListener('input',()=>sincronizarTelefonePortal('top'));el('portalTelefone').addEventListener('change',()=>buscarClientePortal(false))}if(el('portalTelefoneFinal')){el('portalTelefoneFinal').addEventListener('input',()=>sincronizarTelefonePortal('final'));el('portalTelefoneFinal').addEventListener('change',()=>buscarClientePortal(false))}if(el('compraData')&&!el('compraData').value)el('compraData').value=hoje();renderAll();aplicarModoOperacao();const last=localStorage.getItem(KEY+'_last_page');if(isPublicClient())page('portal');else if(last&&el('page-'+last))page(last)}
+    if(el('producaoReceita')) el('producaoReceita').addEventListener('change',()=>{renderProducao();});if(el('telefonePedido')){el('telefonePedido').addEventListener('input',()=>{renderResumo();buscarClientesPedido()})}if(el('portalTelefone')){el('portalTelefone').addEventListener('input',()=>sincronizarTelefonePortal('top'));el('portalTelefone').addEventListener('change',()=>buscarClientePortal(false))}if(el('portalTelefoneFinal')){el('portalTelefoneFinal').addEventListener('input',()=>sincronizarTelefonePortal('final'));el('portalTelefoneFinal').addEventListener('change',()=>buscarClientePortal(false))}if(el('compraData')&&!el('compraData').value)el('compraData').value=hoje();renderAll();aplicarModoOperacao();const last=localStorage.getItem(KEY+'_last_page');if(isPublicClient())page('portal');else if(last&&el('page-'+last))page(last);supabaseInicializar()}
   return{init,page,renderAll,toggleItem,setQtdItem,adicionarPratoPedido,removerPratoPedido,finalizarPedido,limparPedido,atualizarStatus,confirmarPagamento,excluirPedido,confirmarExcluirPedido,escolherIcone,salvarItem,editarItem,limparFormItem,removerItem,salvarCliente,editarCliente,limparCliente,removerCliente,salvarMovimentacao,removerMovimentacao,salvarConfig,verPedido,fecharModal,exportarBackup,importarBackup,buscarClientesPedido,selecionarClientePedido,carregarImagemMarketing,salvarMarketing,editarMarketing,limparMarketing,removerMarketing,salvarFavoritoPedido,alternarModoOperacao,adicionarMural,concluirMural,removerMural,fecharCaixa,registrarFechamento,restaurarUltimoSeguro,limparLogs,salvarCompra,editarCompra,limparCompra,removerCompra,adicionarInsumoReceita,removerInsumoReceita,salvarReceita,editarReceita,removerReceita,limparReceita,registrarProducao,renderProducao,renderRelatorios,imprimirRelatorio,salvarOnlineReady,prepararIdsOnline,usarFavorito,removerFavorito,abrirEditarDadosPedido,salvarDadosPedido,editarPedido,renderPortalCliente,scrollPortalTo,scrollPortalToCategory,irParaCheckoutPortal,sincronizarTelefonePortal,togglePortalItem,setPortalQtd,adicionarPratoPortal,removerPratoPortal,limparPortalCliente,criarPedidoPortal,copiarMensagemPortal,confirmarPedidoPortal,buscarClientePortal,repetirUltimoPedidoPortal}
 })();
 document.addEventListener('DOMContentLoaded',App.init);

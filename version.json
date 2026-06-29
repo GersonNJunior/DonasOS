@@ -1,7 +1,1 @@
-{
-  "version": "1.0.4",
-  "name": "Donas OS 1.0.4 GO LIVE",
-  "date": "2026-06-29T21:54:14.131090",
-  "status": "release-candidate",
-  "notes": "Polimento mensagem loja fechada pública e toast mobile."
-}
+{"name":"Donas OS","version":"1.1.0","codename":"Supabase Pedidos Beta","date":"2026-06-29"}
