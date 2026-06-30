@@ -1,3 +1,11 @@
+
+## 1.1.10 - Correção validação de estoque
+
+- Corrige validação de estoque para pedidos com itens vindos do Supabase.
+- Localiza item por ID, ID Supabase ou nome/categoria.
+- Evita falsa mensagem de estoque insuficiente ao confirmar pedido.
+- Agrupa quantidades do mesmo item antes de validar estoque.
+
 # Changelog
 
 ## 1.0.0 - Produção GO LIVE
