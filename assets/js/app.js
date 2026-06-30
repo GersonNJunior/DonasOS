@@ -52,7 +52,7 @@ const App=(()=>{
     x.compras=x.compras.map(c=>({...c,onlineId:c.onlineId||onlineId('COMP'),updatedAt:c.updatedAt||new Date().toISOString(),syncStatus:c.syncStatus||'local'}));
     x.receitas=x.receitas.map(r=>({...r,onlineId:r.onlineId||onlineId('REC'),updatedAt:r.updatedAt||new Date().toISOString(),syncStatus:r.syncStatus||'local'}));
     x.pedidos=x.pedidos.map(p=>({...p,onlineId:p.onlineId||onlineId('PED'),updatedAt:p.updatedAt||new Date().toISOString(),syncStatus:p.syncStatus||'local',timeline:p.timeline||[{status:p.status||'Pedido Feito',data:p.data||new Date().toISOString()}]}));delete x.producao;return x}
-  const Data={load(){try{let raw=localStorage.getItem(KEY);if(!raw){for(const k of OLDS){raw=localStorage.getItem(k);if(raw)break;}}return raw?migrate(JSON.parse(raw)):seed()}catch(e){return seed()}},save(db){try{const cur=localStorage.getItem(KEY);if(cur)localStorage.setItem(KEY+'_last_good',cur);localStorage.setItem(KEY,JSON.stringify(db));}catch(e){alert('Não foi possível salvar os dados. O armazenamento do navegador pode estar cheio.')}}};
+  const Data={load(){try{let raw=localStorage.getItem(KEY);if(!raw){for(const k of OLDS){raw=localStorage.getItem(k);if(raw)break;}}return raw?migrate(JSON.parse(raw)):migrate(seed())}catch(e){return seed()}},save(db){try{const cur=localStorage.getItem(KEY);if(cur)localStorage.setItem(KEY+'_last_good',cur);localStorage.setItem(KEY,JSON.stringify(db));}catch(e){alert('Não foi possível salvar os dados. O armazenamento do navegador pode estar cheio.')}}};
   let db=Data.load();
   let pedido=novoPedido();
   let editBuffer=null;
@@ -566,6 +566,7 @@ const App=(()=>{
     try{return txt?JSON.parse(txt):null}catch(e){return txt}
   }
   async function supabaseGetLoja(){
+    db.sync=db.sync||{modo:'online',status:'supabase beta',fila:[],lastSync:'',supabaseUrl:SUPABASE_DEFAULT_URL,supabaseAnonKey:SUPABASE_DEFAULT_KEY,lojaAberta:false,horarioModo:'manual',horarios:{sex:{ativo:true,inicio:'18:00',fim:'23:00'},sab:{ativo:true,inicio:'18:00',fim:'23:00'},dom:{ativo:true,inicio:'18:00',fim:'22:00'}}};
     if(supabaseLojaId)return supabaseLojaId;
     const lojas=await supabaseRequest('/lojas?select=*&limit=1');
     let loja=Array.isArray(lojas)?lojas[0]:null;
