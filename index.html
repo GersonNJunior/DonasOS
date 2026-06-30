@@ -499,7 +499,7 @@
 
           <div class="online-quick-cards" id="portalMenuAnchor">
             <button class="online-menu-card pasta" onclick="App.scrollPortalToCategory('Massa')"><span>🍝</span><strong>Monte seu prato</strong><small>Escolha massa, molho e ingredientes</small></button>
-            <button id="onlineBebidasBtn" class="online-menu-card" onclick="App.scrollPortalToCategory('Bebida')"><span>🥤</span><strong>Bebidas</strong><small>Complete seu pedido</small></button>
+            <button id="onlinePratosProntosBtn" class="online-menu-card hidden" onclick="App.scrollPortalToCategory('Prato Pronto')"><span>🍽️</span><strong>Pratos prontos</strong><small>Escolha uma sugestão pronta da casa</small></button>
             <button id="onlineSobremesasBtn" class="online-menu-card hidden" onclick="App.scrollPortalToCategory('Sobremesa')"><span>🍰</span><strong>Sobremesas</strong><small>Complete seu pedido</small></button>
           </div>
 
@@ -510,8 +510,8 @@
               <p>Você pode navegar livremente. Ao montar um pedido, use seu telefone para buscar cadastro, histórico e último pedido.</p>
             </div>
             <div class="online-phone-search">
-              <input id="portalTelefone" placeholder="WhatsApp com DDD" oninput="App.buscarClientePortal(false)">
-              <button class="secondary" onclick="App.buscarClientePortal(true)">Buscar</button>
+              <input id="portalTelefone" placeholder="WhatsApp com DDD" oninput="App.sincronizarTelefonePortal('top')">
+              <button class="secondary" onclick="App.buscarClientePortal(true)">Localizar</button>
             </div>
             <div id="portalClienteStatus" class="portal-welcome muted">Informe o telefone para buscar cadastro, histórico e último pedido.</div>
           </div>
@@ -525,15 +525,15 @@
               </div>
               <div id="portalItens" class="online-menu-list"></div>
             </div>
-            <aside class="online-cart-card">
+            <aside id="portalCarrinho" class="online-cart-card">
               <div class="online-section-head">
                 <span class="online-section-label">Carrinho</span>
                 <h3>Seu pedido</h3>
               </div>
               <div id="portalResumo" class="summary empty-summary">Selecione itens para simular o pedido do cliente</div>
-              <button class="secondary full" onclick="App.adicionarPratoPortal()">Adicionar este prato ao pedido</button>
+              <button class="secondary full" onclick="App.adicionarPratoPortal()">Adicionar outro prato</button>
               <button class="online-primary full" onclick="App.irParaCheckoutPortal()">Finalizar pedido</button>
-              <p class="muted">Use “Adicionar este prato” para pedidos com 2 ou mais pratos no mesmo cliente.</p>
+              <p class="muted">Use “Adicionar outro prato” para pedidos com 2 ou mais pratos no mesmo cliente.</p>
             </aside>
           </div>
 
@@ -545,7 +545,7 @@
             </div>
             <div class="grid2 no-gap-mobile">
               <div>
-                <div class="field"><label>WhatsApp *</label><input id="portalTelefoneFinal" placeholder="WhatsApp com DDD" oninput="App.sincronizarTelefonePortal('final')" onchange="App.buscarClientePortal(false)" required></div>
+                <div class="field"><label>WhatsApp *</label><input id="portalTelefoneFinal" placeholder="WhatsApp com DDD" oninput="App.sincronizarTelefonePortal('final')" required></div>
                 <div class="field"><label>Nome *</label><input id="portalCliente" placeholder="Nome do cliente" required></div>
                 <div class="row"><div class="field"><label>Tipo</label><select id="portalTipo" onchange="App.renderPortalCliente()"><option>Retirada</option><option>Delivery</option></select></div><div class="field"><label>Pagamento combinado</label><select id="portalPagamento"><option>PIX</option><option>Cartão</option><option>Dinheiro</option></select></div></div>
                 <div class="field"><label>Deseja talher?</label><select id="portalTalher"><option value="Não">Não</option><option value="Sim">Sim</option></select><small class="hint">Ajuda a evitar desperdício e organizar a entrega.</small></div>
@@ -555,8 +555,8 @@
               <div class="online-confirm-box">
                 <h4>Ao confirmar</h4>
                 <p>O pedido entra no Donas OS como <strong>Aguardando confirmação</strong> e a mensagem do WhatsApp fica pronta para enviar.</p>
-                <button class="primary full" onclick="App.criarPedidoPortal()">Criar pedido externo</button>
-                <button class="secondary full" onclick="App.limparPortalCliente()">Limpar portal</button>
+                <button class="primary full" onclick="App.criarPedidoPortal()">Concluir pedido</button>
+                <button class="secondary full" onclick="App.limparPortalCliente()">Limpar pedido</button>
               </div>
             </div>
           </div>
@@ -572,7 +572,7 @@
           <div class="online-bottom-nav" aria-label="Navegação Donas Online">
             <button onclick="App.scrollPortalTo('page-portal')">🏠<span>Início</span></button>
             <button onclick="App.scrollPortalTo('portalItens')">🍝<span>Cardápio</span></button>
-            <button onclick="App.scrollPortalTo('portalResumo')">🛒<span>Carrinho</span></button>
+            <button onclick="App.scrollPortalTo('portalCarrinho')">🛒<span>Carrinho</span></button>
             <button onclick="App.scrollPortalTo('portalCheckout')">👤<span>Dados</span></button>
           </div>
         </div>

@@ -292,3 +292,6 @@ body.public-client .empty-summary .inline-link:active{color:#fff !important;}
     z-index:150;
   }
 }
+
+.link-button{background:none;border:0;padding:0;color:inherit;text-decoration:underline;cursor:pointer;font:inherit}
+.link-button:hover{opacity:.85}

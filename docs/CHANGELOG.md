@@ -104,3 +104,11 @@
 ## 4.1.1.4 - GO LIVE Talher e Banner
 - Adicionada opção de talher no pedido online.
 - Banner do Portal Cliente agora aceita modo apenas imagem e tamanho configurável.
+
+## Release 1.1.8 - Ajustes de nomenclatura e navegação do portal
+- Remove o atalho de Bebidas do topo do portal do cliente.
+- Prepara o atalho de Pratos Prontos para uso futuro.
+- Cliente recorrente passa a ser vinculado ao clicar no nome encontrado.
+- Renomeia botões de ação do portal para linguagem mais clara ao cliente.
+- Adiciona confirmação antes de limpar pedido.
+- Ajusta navegação do carrinho pelo rodapé.
