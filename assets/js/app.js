@@ -135,8 +135,8 @@ const App=(()=>{
   function finalizarPedido(){syncPedido();let pratos=[...pedido.pratos];const atual=currentPrato();if(atual.itens.length){if(!validarPrato(selectedItems()))return;pratos.push(atual)}if(!pratos.length)return toast('Adicione ao menos um prato ao pedido');const todos=pratos.flatMap(p=>p.itens);for(const i of todos){const item=db.itens.find(x=>x.id===i.id);if(!item||Number(item.estoque||0)<Number(i.qtdUsada||1))return toast('Estoque insuficiente: '+i.nome)}const subtotal=pratos.reduce((a,p)=>a+p.total,0);const entrega=pedido.tipo==='Delivery'?Number(db.config.taxaEntrega||0):0;const custo=pratos.reduce((a,p)=>a+p.custo,0);const numero=pedido.editandoNumero||String(db.pedidos.length+1).padStart(4,'0');const p={id:pedido.editandoId||uid(),numero,cliente:pedido.cliente||'Cliente balcão',telefone:pedido.telefone,tipo:pedido.tipo,pagamento:'',pagamentoPrevisto:pedido.pagamentoPrevisto||'PIX',obs:pedido.obs,cep:pedido.cep,rua:pedido.rua,numeroEndereco:pedido.numero,complemento:pedido.complemento,endereco:pedido.endereco,bairro:pedido.bairro,cidade:pedido.cidade,uf:pedido.uf,clienteId:pedido.clienteId||'',pratos,itens:todos,total:subtotal+entrega,custo,lucro:subtotal+entrega-custo,status:'Pedido Feito',financeiroLancado:false,estoqueBaixado:true,origem:'interno',data:new Date().toISOString(),timeline:[{status:pedido.editandoNumero?'Pedido editado':'Pedido Feito',data:new Date().toISOString()}]};db.pedidos.unshift(p);log(pedido.editandoNumero?'Pedido editado':'Pedido criado','#'+p.numero+' • '+fmt(p.total));baixarEstoque(todos);editBuffer=null;salvarClienteAutomatico(p);limparPedido(false);save();toast(pedido.editandoNumero?'Pedido editado e reenviado para produção.':'Pedido registrado. Aguardando preparo e pagamento.')}
   function salvarClienteAutomatico(p){registrarClientePendente(p)}
   function registrarClientePendente(p){if(p.clienteId)return;if(!p.telefone&&!p.cliente)return;const tel=norm(p.telefone);const existe=(db.clientes||[]).find(c=>tel&&norm(c.telefone)===tel);if(existe)return;const pendente=(db.clientesPendentes||[]).find(c=>tel&&norm(c.telefone)===tel&&c.status==='pendente');const dados={nome:p.cliente,telefone:p.telefone,cep:p.cep||'',rua:p.rua||'',numero:p.numeroEndereco||p.numero||'',complemento:p.complemento||'',endereco:p.endereco||'',bairro:p.bairro||'',cidade:p.cidade||'',uf:p.uf||'',obs:'Gerado pelo pedido #'+(p.numero||''),pedidoId:p.id,numeroPedido:p.numero,status:'pendente',updatedAt:new Date().toISOString()};if(pendente)Object.assign(pendente,dados);else{db.clientesPendentes=db.clientesPendentes||[];db.clientesPendentes.unshift({id:uid(),createdAt:new Date().toISOString(),...dados});}}
-  async function aprovarClientePendente(id){const c=(db.clientesPendentes||[]).find(x=>x.id===id);if(!c)return;const tel=norm(c.telefone);if(tel&&(db.clientes||[]).some(x=>norm(x.telefone)===tel)){c.status='duplicado';save();return toast('Já existe cliente com este telefone. Revise antes de aprovar.')}const oficial={id:uid(),nome:c.nome,telefone:c.telefone,cep:c.cep||'',rua:c.rua||'',numero:c.numero||'',complemento:c.complemento||'',endereco:c.endereco||enderecoCompleto(c),bairro:c.bairro||'',cidade:c.cidade||'',uf:c.uf||'',obs:c.obs||'Aprovado a partir de pedido',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};db.clientes.push(oficial);c.status='aprovado';c.aprovadoEm=new Date().toISOString();save();supabaseSalvarClienteOficial(oficial);toast('Cliente aprovado e cadastrado')}
-  function reprovarClientePendente(id){const c=(db.clientesPendentes||[]).find(x=>x.id===id);if(!c)return;if(!confirm('Reprovar/remover este cliente pendente?'))return;c.status='reprovado';c.reprovadoEm=new Date().toISOString();save();toast('Cliente pendente reprovado')}
+  async function aprovarClientePendente(id){const c=(db.clientesPendentes||[]).find(x=>x.id===id);if(!c)return;const tel=norm(c.telefone);if(tel&&(db.clientes||[]).some(x=>norm(x.telefone)===tel)){c.status='duplicado';save();return toast('Já existe cliente com este telefone. Revise antes de aprovar.')}const oficial={id:uid(),nome:c.nome,telefone:c.telefone,cep:c.cep||'',rua:c.rua||'',numero:c.numero||'',complemento:c.complemento||'',endereco:c.endereco||enderecoCompleto(c),bairro:c.bairro||'',cidade:c.cidade||'',uf:c.uf||'',obs:c.obs||'Aprovado a partir de pedido',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};db.clientes.push(oficial);c.status='aprovado';c.aprovadoEm=new Date().toISOString();save();await supabaseSalvarClienteOficial(oficial);if(c.supabase_id){try{await supabaseRequest('/clientes_pendentes?id=eq.'+encodeURIComponent(c.supabase_id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status:'aprovado',atualizado_em:new Date().toISOString()})});}catch(e){console.warn('Aprovar pendente Supabase:',e)}}toast('Cliente aprovado e cadastrado');renderAll()}
+  async function reprovarClientePendente(id){const c=(db.clientesPendentes||[]).find(x=>x.id===id);if(!c)return;if(!confirm('Reprovar/remover este cliente pendente?'))return;c.status='reprovado';c.reprovadoEm=new Date().toISOString();save();if(c.supabase_id){try{await supabaseRequest('/clientes_pendentes?id=eq.'+encodeURIComponent(c.supabase_id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status:'reprovado',atualizado_em:new Date().toISOString()})});}catch(e){console.warn('Reprovar pendente Supabase:',e)}}toast('Cliente pendente reprovado');renderAll()}
   function limparPedido(show=true){if(show&&editBuffer){if(confirm('Cancelar edição e restaurar o pedido original?')){db.pedidos.unshift(editBuffer.pedido);if(editBuffer.financeiro)db.financeiro.unshift(editBuffer.financeiro);baixarEstoque(editBuffer.pedido.itens||[]);log('Edição cancelada','#'+editBuffer.pedido.numero);editBuffer=null}else{return}}pedido=novoPedido();['clientePedido','telefonePedido','obsPedido','pedidoCep','pedidoRua','pedidoNumeroEndereco','pedidoComplemento','enderecoPedido','pedidoBairro','bairroPedido','pedidoCidade','pedidoUf'].forEach(id=>{if(el(id))el(id).value=''});if(el('tipoPedido'))el('tipoPedido').value='Balcão';if(el('pagamentoPedido'))el('pagamentoPedido').value='PIX';const box=el('clientesEncontrados');if(box){box.className='client-results hidden';box.innerHTML=''}renderAll();if(show)toast('Pedido limpo')}
   function atualizarStatus(id,status){const p=db.pedidos.find(x=>x.id===id);if(!p)return;if(status==='Entregue'){abrirPagamento(id);return}p.status=status;p.timeline=p.timeline||[];p.timeline.push({status,data:new Date().toISOString()});save();supabaseAtualizarPedido(p);toast('Status atualizado: '+status)}
   function abrirPagamento(id){const p=db.pedidos.find(x=>x.id===id);if(!p)return;el('modalContent').innerHTML=`<div class="receipt"><h2>Finalizar Pedido #${p.numero}</h2><p class="muted">Forma prevista: <b>${p.pagamentoPrevisto||'PIX'}</b>. Confirme ou altere abaixo. Só depois disso entra no financeiro.</p><div class="field"><label>Forma de pagamento</label><select id="pagamentoFinal">${PAGAMENTOS.map(pg=>`<option ${pg===(p.pagamento||p.pagamentoPrevisto||'PIX')?'selected':''}>${pg}</option>`).join('')}</select></div><div class="summary-item"><strong>Total</strong><strong>${fmt(p.total)}</strong></div><button class="primary full" onclick="App.confirmarPagamento('${id}')">Confirmar pagamento e entregar</button><button class="secondary full" onclick="App.fecharModal()">Cancelar</button></div>`;el('modal').classList.remove('hidden')}
@@ -150,7 +150,7 @@ const App=(()=>{
   function limparFormItem(show=true){['itemId','itemNome','itemPreco','itemCusto','itemEstoque','itemMinimo','itemPorcao','itemIcone','itemImagem','itemObs'].forEach(id=>{if(el(id))el(id).value=''});if(el('itemCategoria'))el('itemCategoria').value='Massa';if(el('itemUnidade'))el('itemUnidade').value='un';if(el('itemIconeLista'))el('itemIconeLista').value='';if(el('formItemTitulo')){el('formItemTitulo').textContent='Cadastrar item';el('formItemTitulo').classList.remove('editing-title')}renderListas();if(show)toast('Formulário limpo')}
   function removerItem(id){if(!confirm('Remover este item?'))return;db.itens=db.itens.filter(i=>i.id!==id);save();toast('Item removido')}
 
-  function salvarCliente(){const id=val('clienteId'),nome=val('cliNome').trim();if(!nome)return toast('Informe o nome');const data={nome,telefone:val('cliTelefone'),cep:val('cliCep'),rua:val('cliRua'),numero:val('cliNumero'),complemento:val('cliComplemento'),bairro:val('cliBairro'),cidade:val('cliCidade'),uf:val('cliUf'),endereco:enderecoCompleto({rua:val('cliRua'),numero:val('cliNumero'),complemento:val('cliComplemento'),endereco:val('cliEndereco')}),obs:val('cliObs'),updatedAt:new Date().toISOString()};if(id){const idx=db.clientes.findIndex(c=>c.id===id);if(idx>=0)db.clientes[idx]={...db.clientes[idx],...data}}else db.clientes.push({id:uid(),createdAt:new Date().toISOString(),...data});limparCliente(false);save();toast('Cliente salvo')}
+  async function salvarCliente(){const id=val('clienteId'),nome=val('cliNome').trim();if(!nome)return toast('Informe o nome');const data={nome,telefone:norm(val('cliTelefone')),cep:val('cliCep'),rua:val('cliRua'),numero:val('cliNumero'),complemento:val('cliComplemento'),bairro:val('cliBairro'),cidade:val('cliCidade'),uf:val('cliUf'),endereco:enderecoCompleto({rua:val('cliRua'),numero:val('cliNumero'),complemento:val('cliComplemento'),endereco:val('cliEndereco')}),obs:val('cliObs'),updatedAt:new Date().toISOString()};let clienteAtual=null;if(id){const idx=db.clientes.findIndex(c=>c.id===id);if(idx>=0){db.clientes[idx]={...db.clientes[idx],...data};clienteAtual=db.clientes[idx];}}else{clienteAtual={id:uid(),createdAt:new Date().toISOString(),...data};db.clientes.push(clienteAtual);}limparCliente(false);save();await supabaseSalvarClienteAdm(clienteAtual||data);await supabaseCarregarClientesOficiais();save();toast('Cliente salvo')}
   function editarCliente(id){const c=db.clientes.find(x=>x.id===id);if(!c)return;el('clienteId').value=c.id;el('cliNome').value=c.nome||'';el('cliTelefone').value=c.telefone||'';[['cliCep','cep'],['cliRua','rua'],['cliNumero','numero'],['cliComplemento','complemento'],['cliEndereco','endereco'],['cliBairro','bairro'],['cliCidade','cidade'],['cliUf','uf']].forEach(([id,k])=>{if(el(id))el(id).value=c[k]||''});el('cliObs').value=c.obs||'';page('clientes')}
   function limparCliente(show=true){['clienteId','cliNome','cliTelefone','cliCep','cliRua','cliNumero','cliComplemento','cliEndereco','cliBairro','cliCidade','cliUf','cliObs'].forEach(id=>{if(el(id))el(id).value=''});if(show)toast('Formulário limpo')}
   function removerCliente(id){if(!confirm('Remover cliente?'))return;db.clientes=db.clientes.filter(c=>c.id!==id);save();toast('Cliente removido')}
@@ -604,6 +604,40 @@ const App=(()=>{
     const mappedItens=(itens||[]).map(i=>({id:i.id,nome:i.nome,tipo:i.tipo,categoria:i.tipo,quantidade:i.quantidade,qtdUsada:Number(i.quantidade||1),unidade:'un',preco:Number(i.preco||0),valorCobrado:Number(i.preco||0)}));
     return {id:'sb_'+row.id,supabase_id:row.id,onlineId:row.codigo||row.id,numero,cliente:cliente?.nome||row.cliente_nome||'Cliente online',telefone:cliente?.telefone||row.cliente_telefone||'',tipo:row.tipo_entrega==='delivery'?'Delivery':'Balcão',pagamento:'',pagamentoPrevisto:row.forma_pagamento||'PIX',talher:row.talher?'Sim':'Não',obs:row.observacao||'',cep:cliente?.cep||row.cep||'',rua:cliente?.rua||row.rua||'',numeroEndereco:cliente?.numero||row.numero_endereco||'',complemento:cliente?.complemento||row.complemento||'',endereco:cliente?.endereco||row.endereco||'',bairro:cliente?.bairro||row.bairro||'',cidade:cliente?.cidade||row.cidade||'',uf:cliente?.uf||row.uf||'',clienteId:cliente?.id||'',pratos:[{id:'pr_'+row.id,nome:'Pedido online',itens:mappedItens,total:Number(row.valor_total||0),custo:0}],itens:mappedItens,total:Number(row.valor_total||0),custo:0,lucro:Number(row.valor_total||0),status:({aguardando_confirmacao:'Aguardando confirmação',pedido_feito:'Pedido Feito',preparando:'Preparando',pedido_pronto:'Pedido Pronto',entregue:'Entregue'}[row.status]||row.status||'Aguardando confirmação'),financeiroLancado:row.status==='entregue',estoqueBaixado:false,origem:'supabase',data,timeline:[{status:'Importado do Supabase',data}],syncStatus:'sincronizado'};
   }
+
+  function mapClienteSupabase(row){
+    return {id:'sbcli_'+row.id,supabase_id:row.id,nome:row.nome||'Cliente',telefone:row.telefone||'',cep:row.cep||'',rua:row.rua||'',numero:row.numero||'',complemento:row.complemento||'',endereco:row.endereco||enderecoCompleto(row),bairro:row.bairro||'',cidade:row.cidade||'',uf:row.uf||'',obs:row.observacao||'',createdAt:row.criado_em||row.created_at||new Date().toISOString(),updatedAt:row.atualizado_em||row.updated_at||row.criado_em||new Date().toISOString(),origem:'supabase'};
+  }
+  function mesclarClientesOficiaisSupabase(rows){
+    const locais=(db.clientes||[]).filter(c=>!c.supabase_id);
+    const remotos=(rows||[]).map(mapClienteSupabase);
+    const porTelefone=new Map();
+    [...remotos,...locais].forEach(c=>{
+      const tel=norm(c.telefone||'');
+      const chave=tel||('local_'+(c.id||uid()));
+      if(!porTelefone.has(chave))porTelefone.set(chave,c);
+    });
+    db.clientes=[...porTelefone.values()].sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
+  }
+  async function supabaseCarregarClientesOficiais(){
+    try{
+      await supabaseGetLoja();
+      const rows=await supabaseRequest('/clientes?select=*&order=nome.asc&limit=300');
+      mesclarClientesOficiaisSupabase(rows||[]);
+    }catch(e){console.warn('Supabase clientes oficiais:',e)}
+  }
+
+  function mapClientePendenteSupabase(row){
+    return {id:'sbpend_'+row.id,supabase_id:row.id,nome:row.nome||'',telefone:row.telefone||'',cep:row.cep||'',rua:row.rua||'',numero:row.numero||'',complemento:row.complemento||'',endereco:row.endereco||'',bairro:row.bairro||'',cidade:row.cidade||'',uf:row.uf||'',obs:row.observacao||'',numeroPedido:row.pedido_codigo||'',status:row.status||'pendente',createdAt:row.criado_em||new Date().toISOString(),updatedAt:row.atualizado_em||row.criado_em||new Date().toISOString()};
+  }
+  async function supabaseCarregarClientesPendentes(){
+    try{
+      const rows=await supabaseRequest('/clientes_pendentes?select=*&status=eq.pendente&order=criado_em.desc&limit=80');
+      const locais=(db.clientesPendentes||[]).filter(c=>!c.supabase_id&&c.status==='pendente');
+      db.clientesPendentes=[...locais,...(rows||[]).map(mapClientePendenteSupabase)];
+    }catch(e){console.warn('Supabase clientes pendentes:',e)}
+  }
+
   async function supabaseCarregarPedidos(){
     if(supabaseBusy)return; supabaseBusy=true;
     try{
@@ -623,8 +657,10 @@ const App=(()=>{
         const cli=clientes.find(c=>c.id===r.cliente_id)||null;
         db.pedidos.unshift(mapPedidoSupabase(r,pi,cli));novos++;
       });
-      if(novos){db.pedidos.sort((a,b)=>new Date(b.data||0)-new Date(a.data||0));Data.save(db);renderAll();toast(novos+' pedido(s) online recebido(s)');}
-      db.sync.status='online';db.sync.lastSync=new Date().toISOString();Data.save(db);
+      await supabaseCarregarClientesOficiais();
+      await supabaseCarregarClientesPendentes();
+      if(novos){db.pedidos.sort((a,b)=>new Date(b.data||0)-new Date(a.data||0));toast(novos+' pedido(s) online recebido(s)');}
+      db.sync.status='online';db.sync.lastSync=new Date().toISOString();Data.save(db);renderAll();
     }catch(e){console.warn('Supabase pedidos:',e);db.sync.status='erro: '+String(e.message||e).slice(0,90);Data.save(db)}
     finally{supabaseBusy=false;supabaseLastLoad=Date.now()}
   }
@@ -676,6 +712,25 @@ const App=(()=>{
       }
       await supabaseRequest('/clientes',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});
     }catch(e){console.warn('Cliente oficial Supabase:',e)}
+  }
+  async function supabaseSalvarClienteAdm(c){
+    try{
+      await supabaseGetLoja();
+      const tel=norm(c.telefone||'');
+      if(!tel)return toast('Informe telefone para salvar cliente oficial no banco.');
+      const payload={loja_id:supabaseLojaId,nome:c.nome||'Cliente',telefone:tel,cep:c.cep||'',rua:c.rua||'',numero:c.numero||'',complemento:c.complemento||'',endereco:c.endereco||enderecoCompleto(c),bairro:c.bairro||'',cidade:c.cidade||'',uf:c.uf||'',observacao:c.obs||''};
+      const sid=c.supabase_id||(String(c.id||'').startsWith('sbcli_')?String(c.id).replace('sbcli_',''):null);
+      if(sid){
+        await supabaseRequest('/clientes?id=eq.'+encodeURIComponent(sid),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});
+        return;
+      }
+      const existente=await supabaseRequest('/clientes?select=id&telefone=eq.'+encodeURIComponent(tel)+'&limit=1');
+      if(existente?.[0]?.id){
+        await supabaseRequest('/clientes?id=eq.'+encodeURIComponent(existente[0].id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});
+      }else{
+        await supabaseRequest('/clientes',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});
+      }
+    }catch(e){console.warn('Salvar cliente ADM Supabase:',e);toast('Cliente salvo localmente, mas não consegui sincronizar com Supabase.')}
   }
   function statusParaSupabase(st){return {'Aguardando confirmação':'aguardando_confirmacao','Pedido Feito':'pedido_feito','Preparando':'preparando','Pedido Pronto':'pedido_pronto','Entregue':'entregue'}[st]||'aguardando_confirmacao'}
   async function supabaseEnviarPedido(p){
