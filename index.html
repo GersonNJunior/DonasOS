@@ -80,8 +80,12 @@
             <div class="field client-search-field"><label>Telefone</label><input id="telefonePedido" placeholder="Digite o telefone para buscar cliente"><div id="clientesEncontrados" class="client-results hidden"></div><small class="hint">Digite apenas o número. Não precisa informar o DDD para localizar clientes já cadastrados.</small></div>
             <div class="field"><label>Tipo</label><select id="tipoPedido"><option value="Balcão">Retirada / Balcão</option><option value="Delivery">Delivery</option></select></div>
             <div id="deliveryBox" class="delivery-box hidden">
-              <div class="field"><label>Endereço</label><input id="enderecoPedido" placeholder="Rua, número, complemento"></div>
-              <div class="field"><label>Bairro</label><input id="bairroPedido" placeholder="Bairro"></div>
+              <div class="field"><label>CEP <span class="muted">(opcional)</span></label><input id="pedidoCep" placeholder="Digite o CEP, se souber" inputmode="numeric" maxlength="9" onblur="App.buscarCep('pedido')"><small class="hint">Não é obrigatório. Se informado, busca rua, bairro e cidade automaticamente.</small></div>
+              <div class="row"><div class="field"><label>Rua</label><input id="pedidoRua" placeholder="Rua / Avenida"></div><div class="field"><label>Número</label><input id="pedidoNumeroEndereco" placeholder="Nº"></div></div>
+              <div class="field"><label>Complemento</label><input id="pedidoComplemento" placeholder="Apto, bloco, referência"></div>
+              <div class="row"><div class="field"><label>Bairro</label><input id="pedidoBairro" placeholder="Bairro"></div><div class="field"><label>Cidade</label><input id="pedidoCidade" placeholder="Cidade"></div></div>
+              <div class="field"><label>UF</label><input id="pedidoUf" placeholder="SP" maxlength="2"></div>
+              <input id="enderecoPedido" type="hidden"><input id="bairroPedido" type="hidden">
             </div>
             <div class="field"><label>Forma de pagamento prevista</label><select id="pagamentoPedido"><option>PIX</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option><option>iFood</option><option>Outro</option></select><small class="hint">Use para separar maquininha ou orientar o caixa. Só entra no financeiro quando o pedido for entregue.</small></div>
             <div id="pratosPedido" class="plate-box hidden"></div>
@@ -403,12 +407,18 @@
             <input type="hidden" id="clienteId">
             <div class="field"><label>Nome</label><input id="cliNome"></div>
             <div class="field"><label>WhatsApp</label><input id="cliTelefone"></div>
-            <div class="field"><label>Endereço</label><input id="cliEndereco"></div>
+            <div class="field"><label>CEP <span class="muted">(opcional)</span></label><input id="cliCep" inputmode="numeric" maxlength="9" onblur="App.buscarCep('cli')"></div>
+            <div class="row"><div class="field"><label>Rua</label><input id="cliRua"></div><div class="field"><label>Número</label><input id="cliNumero"></div></div>
+            <div class="field"><label>Complemento</label><input id="cliComplemento"></div>
+            <div class="row"><div class="field"><label>Bairro</label><input id="cliBairro"></div><div class="field"><label>Cidade</label><input id="cliCidade"></div></div>
+            <div class="field"><label>UF</label><input id="cliUf" maxlength="2"></div>
+            <input id="cliEndereco" type="hidden">
             <div class="field"><label>Observação</label><textarea id="cliObs"></textarea></div>
             <button class="primary full" onclick="App.salvarCliente()">Salvar cliente</button>
             <button class="secondary full" onclick="App.limparCliente()">Novo cliente</button>
           </div>
-          <div class="card"><h3>Clientes</h3><div id="listaClientes"></div></div>
+          <div class="card"><h3>Clientes pendentes de aprovação</h3><p class="muted">Pedidos novos não viram cadastro oficial até um ADM aprovar.</p><div id="listaClientesPendentes"></div></div>
+          <div class="card"><h3>Clientes aprovados</h3><div id="listaClientes"></div></div>
         </div>
       </section>
 
@@ -538,7 +548,7 @@
                 <div class="field"><label>Nome *</label><input id="portalCliente" placeholder="Nome do cliente" required></div>
                 <div class="row"><div class="field"><label>Tipo</label><select id="portalTipo" onchange="App.renderPortalCliente()"><option>Retirada</option><option>Delivery</option></select></div><div class="field"><label>Pagamento combinado</label><select id="portalPagamento"><option>PIX</option><option>Cartão</option><option>Dinheiro</option></select></div></div>
                 <div class="field"><label>Deseja talher?</label><select id="portalTalher"><option value="Não">Não</option><option value="Sim">Sim</option></select><small class="hint">Ajuda a evitar desperdício e organizar a entrega.</small></div>
-                <div id="portalEnderecoBox" class="hidden"><div class="field"><label>Endereço completo *</label><input id="portalEndereco" placeholder="Rua, número, complemento"></div><div class="field"><label>Bairro *</label><input id="portalBairro" placeholder="Bairro"></div><label class="check-line"><input id="portalConfirmaEndereco" type="checkbox"> Confirmo que este é o endereço correto para a entrega deste pedido.</label></div>
+                <div id="portalEnderecoBox" class="hidden"><div class="field"><label>CEP <span class="muted">(opcional)</span></label><input id="portalCep" placeholder="Digite o CEP, se souber" inputmode="numeric" maxlength="9" onblur="App.buscarCep('portal')"><small class="hint">O CEP ajuda a preencher o endereço, mas não é obrigatório.</small></div><div class="row"><div class="field"><label>Rua *</label><input id="portalRua" placeholder="Rua / Avenida"></div><div class="field"><label>Número *</label><input id="portalNumero" placeholder="Nº"></div></div><div class="field"><label>Complemento</label><input id="portalComplemento" placeholder="Apto, bloco, referência"></div><div class="row"><div class="field"><label>Bairro *</label><input id="portalBairro" placeholder="Bairro"></div><div class="field"><label>Cidade</label><input id="portalCidade" placeholder="Cidade"></div></div><div class="field"><label>UF</label><input id="portalUf" placeholder="SP" maxlength="2"></div><input id="portalEndereco" type="hidden"><label class="check-line"><input id="portalConfirmaEndereco" type="checkbox"> Confirmo que este é o endereço correto para a entrega deste pedido.</label></div>
                 <div class="field"><label>Observação</label><textarea id="portalObs" placeholder="Ex: sem cebola, entregar no portão..."></textarea></div>
               </div>
               <div class="online-confirm-box">
