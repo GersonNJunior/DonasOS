@@ -1,1 +1,5 @@
-{"version":"1.1.4","name":"Correção clientes oficiais no ADM","date":"2026-06-30"}
+{
+  "version": "1.1.6",
+  "name": "Correcao duplicidade clientes pendentes",
+  "date": "2026-06-30"
+}
