@@ -373,7 +373,7 @@ const App=(()=>{
   function restaurarUltimoSeguro(){const raw=localStorage.getItem(KEY+'_last_good');if(!raw)return toast('Nenhum ponto seguro encontrado');if(!confirm('Restaurar o último ponto seguro salvo neste navegador?'))return;try{db=migrate(JSON.parse(raw));log('Restauração','Último ponto seguro restaurado');save();toast('Dados restaurados')}catch(e){toast('Não foi possível restaurar')}}
   function limparLogs(){if(!confirm('Limpar histórico de ações?'))return;db.logs=[];save();toast('Logs limpos')}
   function custoUnitarioCompra(c){const q=Number(c.qtd||0),v=Number(c.valor||0);return q>0?v/q:0}
-  function salvarCompra(){
+  async function salvarCompra(){
     const id=val('compraId'),produto=val('compraProduto').trim();
     if(!produto)return toast('Informe o produto comprado');
     const qtd=Number(val('compraQtd')||0),valor=Number(val('compraValor')||0);
@@ -382,12 +382,14 @@ const App=(()=>{
     const data={produto,local:val('compraLocal').trim(),data:val('compraData')||hoje(),qtd,unidade:val('compraUnidade')||'un',valor,categoria:val('compraCategoria')||'Insumo',itemId:val('compraItemEstoque'),addEstoque:!!el('compraAddEstoque')?.checked,financeiro:!!el('compraFinanceiro')?.checked,obs:val('compraObs'),custoUnitario:0};
     data.custoUnitario=custoUnitarioCompra(data);
     let compraId=id||uid();
+    let compraObj=null;
     if(id){
       const idx=db.compras.findIndex(c=>c.id===id);
-      if(idx>=0)db.compras[idx]={...db.compras[idx],...data};
+      if(idx>=0){db.compras[idx]={...db.compras[idx],...data,updatedAt:new Date().toISOString(),syncStatus:'local'};compraObj=db.compras[idx];}
     }else{
       db.compras=db.compras||[];
-      db.compras.unshift({id:compraId,...data,createdAt:new Date().toISOString()});
+      compraObj={id:compraId,onlineId:onlineId('COMP'),...data,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),syncStatus:'local'};
+      db.compras.unshift(compraObj);
     }
     if(data.addEstoque && !id){
       let item=data.itemId?db.itens.find(i=>i.id===data.itemId):null;
@@ -396,18 +398,22 @@ const App=(()=>{
         item.custo=data.custoUnitario||item.custo||0;
         item.obs=item.obs||data.local||data.obs||'';
       }else{
-        db.itens.push({id:uid(),nome:produto,categoria:data.categoria,preco:0,custo:data.custoUnitario,estoque:qtd,minimo:0,unidade:data.unidade,icone:iconeCat(data.categoria),imagem:'',porcao:unidadeInteira({unidade:data.unidade})?1:Math.max(0.1,Math.round(qtd*10)/10),obs:data.local||data.obs||'',ativo:true});
+        item={id:uid(),nome:produto,categoria:data.categoria,preco:0,custo:data.custoUnitario,estoque:qtd,minimo:0,unidade:data.unidade,icone:iconeCat(data.categoria),imagem:'',porcao:unidadeInteira({unidade:data.unidade})?1:Math.max(0.1,Math.round(qtd*10)/10),obs:data.local||data.obs||'',ativo:true};
+        db.itens.push(item);
       }
+      await supabaseSalvarItem(item);
+      if(compraObj && item?.id)compraObj.itemId=item.id;
     }
     if(data.financeiro && !id){
       db.financeiro.unshift({id:uid(),desc:'Compra: '+produto+(data.local?' • '+data.local:''),valor:valor,tipo:'saida',data:new Date(data.data+'T12:00:00').toISOString(),origem:'compra',compraId});
     }
+    if(compraObj)await supabaseSalvarCompra(compraObj);
     log(id?'Compra editada':'Compra registrada',produto+' • '+fmt(valor));
-    limparCompra(false);save();supabaseSincronizarItensLocais();toast('Compra salva')
+    limparCompra(false);save();renderAll();toast('Compra salva')
   }
   function editarCompra(id){const c=(db.compras||[]).find(x=>x.id===id);if(!c)return;el('compraId').value=c.id;el('compraProduto').value=c.produto||'';el('compraLocal').value=c.local||'';el('compraData').value=c.data||hoje();el('compraQtd').value=c.qtd||0;el('compraUnidade').value=c.unidade||'un';el('compraValor').value=c.valor||0;el('compraCategoria').value=c.categoria||'Insumo';el('compraItemEstoque').value=c.itemId||'';el('compraAddEstoque').checked=!!c.addEstoque;el('compraFinanceiro').checked=!!c.financeiro;el('compraObs').value=c.obs||'';el('formCompraTitulo').textContent='Editar compra';page('compras')}
   function limparCompra(render=true){['compraId','compraProduto','compraLocal','compraQtd','compraValor','compraObs'].forEach(id=>{if(el(id))el(id).value=''});if(el('compraData'))el('compraData').value=hoje();if(el('compraUnidade'))el('compraUnidade').value='un';if(el('compraCategoria'))el('compraCategoria').value='Insumo';if(el('compraItemEstoque'))el('compraItemEstoque').value='';if(el('compraAddEstoque'))el('compraAddEstoque').checked=true;if(el('compraFinanceiro'))el('compraFinanceiro').checked=true;if(el('formCompraTitulo'))el('formCompraTitulo').textContent='Lançar compra';if(render)renderAll()}
-  function removerCompra(id){const c=(db.compras||[]).find(x=>x.id===id);if(!c)return;if(!confirm('Remover este registro de compra? Isso não altera automaticamente estoque ou financeiro já lançados.'))return;db.compras=(db.compras||[]).filter(x=>x.id!==id);log('Compra removida',c.produto);save();toast('Compra removida')}
+  async function removerCompra(id){const c=(db.compras||[]).find(x=>x.id===id);if(!c)return;if(!confirm('Remover este registro de compra? Isso não altera automaticamente estoque ou financeiro já lançados.'))return;db.compras=(db.compras||[]).filter(x=>x.id!==id);await supabaseRemoverCompra(c);log('Compra removida',c.produto);save();toast('Compra removida')}
   function renderCompras(){
     if(!el('listaCompras'))return;
     const busca=(val('buscaCompra')||'').toLowerCase(),cat=val('filtroCompraCategoria');
@@ -691,6 +697,47 @@ const App=(()=>{
     try{for(const i of (db.itens||[])){await supabaseSalvarItem(i)}db.sync.status='online';db.sync.lastSync=new Date().toISOString();Data.save(db)}catch(e){console.warn('Sincronizar itens:',e)}
   }
 
+  function mapCompraSupabase(row){
+    const item=(db.itens||[]).find(i=>i.supabase_id===row.estoque_item_id||String(i.id||'')==='sbit_'+row.estoque_item_id);
+    return {id:'sbcomp_'+row.id,supabase_id:row.id,onlineId:row.codigo||('COMP-'+row.id),produto:row.produto||'',local:row.local||'',data:row.data_compra||hoje(),qtd:Number(row.quantidade||0),unidade:row.unidade||'un',valor:Number(row.valor_total||0),categoria:row.categoria||'Insumo',itemId:item?.id||'',addEstoque:!!row.adiciona_estoque,financeiro:!!row.lancar_financeiro,obs:row.observacao||'',custoUnitario:Number(row.custo_unitario||0),createdAt:row.criado_em||new Date().toISOString(),updatedAt:row.atualizado_em||row.criado_em||new Date().toISOString(),syncStatus:'sincronizado'};
+  }
+  function payloadCompraSupabase(c){
+    const item=c.itemId?(db.itens||[]).find(i=>i.id===c.itemId):null;
+    return {loja_id:supabaseLojaId,codigo:c.onlineId||c.id||onlineId('COMP'),produto:c.produto||'',local:c.local||'',data_compra:c.data||hoje(),quantidade:Number(c.qtd||0),unidade:c.unidade||'un',valor_total:Number(c.valor||0),categoria:c.categoria||'Insumo',estoque_item_id:item?.supabase_id||null,adiciona_estoque:!!c.addEstoque,lancar_financeiro:!!c.financeiro,observacao:c.obs||'',custo_unitario:Number(c.custoUnitario||custoUnitarioCompra(c)||0),atualizado_em:new Date().toISOString()};
+  }
+  function mesclarComprasSupabase(rows){
+    const remotas=(rows||[]).map(mapCompraSupabase);
+    const remotasChaves=new Set(remotas.map(c=>c.onlineId||c.supabase_id));
+    const locais=(db.compras||[]).filter(c=>!c.supabase_id&&!remotasChaves.has(c.onlineId));
+    const porChave=new Map();
+    [...remotas,...locais].forEach(c=>{const chave=c.supabase_id||c.onlineId||c.id;if(!porChave.has(chave))porChave.set(chave,c)});
+    db.compras=[...porChave.values()].sort((a,b)=>String(b.data||'').localeCompare(String(a.data||''))||new Date(b.createdAt||0)-new Date(a.createdAt||0));
+  }
+  async function supabaseCarregarCompras(){
+    try{await supabaseGetLoja();const rows=await supabaseRequest('/compras?select=*&order=data_compra.desc,criado_em.desc&limit=500');mesclarComprasSupabase(rows||[]);Data.save(db);renderCompras();}
+    catch(e){console.warn('Supabase compras:',e)}
+  }
+  async function supabaseSalvarCompra(c){
+    try{
+      await supabaseGetLoja();
+      if(!c.onlineId)c.onlineId=c.id||onlineId('COMP');
+      const payload=payloadCompraSupabase(c);
+      const sid=c.supabase_id||(String(c.id||'').startsWith('sbcomp_')?String(c.id).replace('sbcomp_',''):null);
+      if(sid){await supabaseRequest('/compras?id=eq.'+encodeURIComponent(sid),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});c.syncStatus='sincronizado';return;}
+      const existente=await supabaseRequest('/compras?select=id&codigo=eq.'+encodeURIComponent(c.onlineId)+'&limit=1');
+      if(existente?.[0]?.id){c.supabase_id=existente[0].id;await supabaseRequest('/compras?id=eq.'+encodeURIComponent(existente[0].id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});}
+      else{const criado=await supabaseRequest('/compras?select=id',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});if(criado?.[0]?.id)c.supabase_id=criado[0].id;}
+      c.syncStatus='sincronizado';
+    }catch(e){console.warn('Salvar compra Supabase:',e);c.syncStatus='erro';toast('Compra salva localmente, mas não sincronizou com Supabase.')}
+  }
+  async function supabaseRemoverCompra(c){
+    try{const sid=c?.supabase_id||(String(c?.id||'').startsWith('sbcomp_')?String(c.id).replace('sbcomp_',''):null);if(sid)await supabaseRequest('/compras?id=eq.'+encodeURIComponent(sid),{method:'DELETE',headers:{Prefer:'return=minimal'}});}
+    catch(e){console.warn('Remover compra Supabase:',e)}
+  }
+  async function supabaseSincronizarComprasLocais(){
+    try{for(const c of (db.compras||[])){if(!c.supabase_id)await supabaseSalvarCompra(c)}db.sync.status='online';db.sync.lastSync=new Date().toISOString();Data.save(db)}catch(e){console.warn('Sincronizar compras:',e)}
+  }
+
   function mapPedidoSupabase(row,itens=[],cliente=null){
     const data=row.criado_em||row.created_at||new Date().toISOString();
     const numero=(row.codigo||'').split('-').pop()||String((db.pedidos||[]).length+1).padStart(4,'0');
@@ -858,7 +905,7 @@ const App=(()=>{
     try{await supabaseRequest('/pedidos?id=eq.'+encodeURIComponent(p.supabase_id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status:statusParaSupabase(p.status),forma_pagamento:p.pagamento||p.pagamentoPrevisto||'PIX',valor_total:Number(p.total||0)})});}catch(e){console.warn('Update pedido Supabase:',e)}
   }
   async function supabaseInicializar(){
-    try{await supabaseGetLoja();await supabaseCarregarItens();if(!isPublicClient())await supabaseSincronizarItensLocais();await supabaseCarregarPedidos();setInterval(()=>{if(!isPublicClient()){supabaseCarregarItens();supabaseCarregarPedidos()}},8000);}catch(e){console.warn('Supabase init:',e)}
+    try{await supabaseGetLoja();await supabaseCarregarItens();if(!isPublicClient()){await supabaseSincronizarItensLocais();await supabaseCarregarCompras();await supabaseSincronizarComprasLocais();}await supabaseCarregarPedidos();setInterval(()=>{if(!isPublicClient()){supabaseCarregarItens();supabaseCarregarCompras();supabaseCarregarPedidos()}},8000);}catch(e){console.warn('Supabase init:',e)}
   }
 
   function renderOnlineReady(){
