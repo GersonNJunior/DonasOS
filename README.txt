@@ -1,6 +1,4 @@
-Donas OS 1.1.7 - Correção busca manual de cliente no portal
+Donas OS 1.1.21 - Correção Persistência de Ações dos Pedidos
 
-- Cliente não é mais selecionado automaticamente ao digitar telefone.
-- Busca de cliente agora acontece pelo botão Buscar.
-- Se o telefone for alterado, o vínculo com o cliente encontrado é removido.
-- Permite apagar/corrigir telefone sem precisar limpar o portal.
+Não precisa rodar SQL.
+Corrige ações que eram desfeitas após sincronização com Supabase.

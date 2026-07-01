@@ -87,11 +87,11 @@
               <div class="field"><label>UF</label><input id="pedidoUf" placeholder="SP" maxlength="2"></div>
               <input id="enderecoPedido" type="hidden"><input id="bairroPedido" type="hidden">
             </div>
-            <div class="field"><label>Forma de pagamento prevista</label><select id="pagamentoPedido"><option>PIX</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option><option>iFood</option><option>Outro</option></select><small class="hint">Use para separar maquininha ou orientar o caixa. Só entra no financeiro quando o pedido for entregue.</small></div>
+            <div class="field"><label>Forma de pagamento prevista</label><select id="pagamentoPedido"><option>PIX</option><option>Dinheiro</option><option>Débito</option><option>Crédito</option><option>iFood</option><option>Outro</option></select><small class="hint">Use para separar maquininha ou orientar o caixa.</small></div><div class="field"><label>Pagamento recebido?</label><select id="pagamentoRecebidoPedido"><option value="nao">Não, receber na entrega/retirada</option><option value="sim">Sim, já foi pago</option></select><small class="hint">Se marcar como pago, a receita entra no financeiro imediatamente.</small></div>
             <div id="pratosPedido" class="plate-box hidden"></div>
             <div id="resumoPedido" class="summary empty-summary">Selecione os itens do prato ou adicione bebidas/sobremesas avulsas</div>
             <button class="secondary full" onclick="App.adicionarPratoPedido()">Adicionar prato ao pedido</button>
-            <div class="pending-note"><strong>Fluxo:</strong> você pode adicionar vários pratos no mesmo pedido. A venda só entra no financeiro quando for marcada como entregue.
+            <div class="pending-note"><strong>Fluxo:</strong> você pode adicionar vários pratos no mesmo pedido. A venda entra no financeiro quando o pagamento for marcado como recebido.
             <div class="field"><label>Observação</label><textarea id="obsPedido" placeholder="Ex: sem cebola, caprichar no molho"></textarea></div>
             <div class="total-line"><span>Total</span><strong id="totalPedido">R$ 0,00</strong></div>
             <button class="primary full" onclick="App.finalizarPedido()">Registrar pedido</button>
@@ -324,12 +324,13 @@
           <div>
             <p class="eyebrow">Donas Insights</p>
             <h2>Inteligência de gestão</h2>
-            <p class="muted">Resumo automático baseado em pedidos, compras, estoque e produção. Use esta tela para decidir compras, produção e melhorias no cardápio.</p>
+            <p class="muted">Resumo automático baseado em pedidos, compras, estoque e produção. Use esta tela para decidir compras, produção e melhorias no cardápio.</p><small id="insightsSyncStatus" class="muted">Sincronizando com o Supabase automaticamente.</small>
           </div>
+          <button class="secondary" onclick="App.atualizarInsightsSupabase()">Atualizar Insights</button>
         </div>
         <div class="stats-grid">
-          <article class="stat"><span>Faturamento hoje</span><strong id="insFaturamentoHoje">R$ 0,00</strong><small>pedidos entregues</small></article>
-          <article class="stat"><span>Pedidos hoje</span><strong id="insPedidosHoje">0</strong><small>concluídos</small></article>
+          <article class="stat"><span>Faturamento hoje</span><strong id="insFaturamentoHoje">R$ 0,00</strong><small>pedidos pagos</small></article>
+          <article class="stat"><span>Pedidos hoje</span><strong id="insPedidosHoje">0</strong><small>pagos</small></article>
           <article class="stat"><span>Ticket médio</span><strong id="insTicketHoje">R$ 0,00</strong><small>média do dia</small></article>
           <article class="stat"><span>Lucro estimado</span><strong id="insLucroHoje">R$ 0,00</strong><small>vendas - custos</small></article>
         </div>
@@ -547,7 +548,7 @@
               <div>
                 <div class="field"><label>WhatsApp *</label><input id="portalTelefoneFinal" placeholder="WhatsApp com DDD" oninput="App.sincronizarTelefonePortal('final')" required></div>
                 <div class="field"><label>Nome *</label><input id="portalCliente" placeholder="Nome do cliente" required></div>
-                <div class="row"><div class="field"><label>Tipo</label><select id="portalTipo" onchange="App.renderPortalCliente()"><option>Retirada</option><option>Delivery</option></select></div><div class="field"><label>Pagamento combinado</label><select id="portalPagamento"><option>PIX</option><option>Cartão</option><option>Dinheiro</option></select></div></div>
+                <div class="row"><div class="field"><label>Tipo</label><select id="portalTipo" onchange="App.renderPortalCliente()"><option>Retirada</option><option>Delivery</option></select></div><div class="field"><label>Pagamento combinado</label><select id="portalPagamento"><option>PIX</option><option>Cartão</option><option>Dinheiro</option></select></div></div><div class="field"><label>Pagamento recebido?</label><select id="portalPagamentoRecebido"><option value="nao">Não, vou pagar na entrega/retirada</option><option value="sim">Sim, já paguei</option></select><small class="hint">Use “Sim” para PIX já pago ou pagamento antecipado.</small></div>
                 <div class="field"><label>Deseja talher?</label><select id="portalTalher"><option value="Não">Não</option><option value="Sim">Sim</option></select><small class="hint">Ajuda a evitar desperdício e organizar a entrega.</small></div>
                 <div id="portalEnderecoBox" class="hidden"><div class="field"><label>CEP <span class="muted">(opcional)</span></label><input id="portalCep" placeholder="Digite o CEP, se souber" inputmode="numeric" maxlength="9" onblur="App.buscarCep('portal')"><small class="hint">O CEP ajuda a preencher o endereço, mas não é obrigatório.</small></div><div class="row"><div class="field"><label>Rua *</label><input id="portalRua" placeholder="Rua / Avenida"></div><div class="field"><label>Número *</label><input id="portalNumero" placeholder="Nº"></div></div><div class="field"><label>Complemento</label><input id="portalComplemento" placeholder="Apto, bloco, referência"></div><div class="row"><div class="field"><label>Bairro *</label><input id="portalBairro" placeholder="Bairro"></div><div class="field"><label>Cidade</label><input id="portalCidade" placeholder="Cidade"></div></div><div class="field"><label>UF</label><input id="portalUf" placeholder="SP" maxlength="2"></div><input id="portalEndereco" type="hidden"><label class="check-line"><input id="portalConfirmaEndereco" type="checkbox"> Confirmo que este é o endereço correto para a entrega deste pedido.</label></div>
                 <div class="field"><label>Observação</label><textarea id="portalObs" placeholder="Ex: sem cebola, entregar no portão..."></textarea></div>
