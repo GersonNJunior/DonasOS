@@ -429,12 +429,12 @@ const App=(()=>{
   function adicionarInsumoReceita(){const itemId=val('receitaInsumo'),qtd=Number(val('receitaInsumoQtd')||0);if(!itemId)return toast('Selecione o insumo');if(qtd<=0)return toast('Informe a quantidade usada');const item=db.itens.find(i=>i.id===itemId);receitaTemp.push({itemId,qtd,unidade:item?.unidade||'un'});el('receitaInsumoQtd').value='';renderReceitaTemp();renderProducao()}
   function removerInsumoReceita(idx){receitaTemp.splice(idx,1);renderReceitaTemp();renderProducao()}
   function limparReceita(render=true){receitaTemp=[];['receitaId','receitaRendimento'].forEach(id=>{if(el(id))el(id).value=''});if(el('receitaProduto'))el('receitaProduto').value='';if(el('receitaUnidade'))el('receitaUnidade').value='L';if(el('formReceitaTitulo'))el('formReceitaTitulo').textContent='Cadastrar ficha técnica';renderReceitaTemp();if(render)renderAll()}
-  function salvarReceita(){const id=val('receitaId'),produtoId=val('receitaProduto'),rendimento=Number(val('receitaRendimento')||0),unidade=val('receitaUnidade')||'L';if(!produtoId)return toast('Selecione o produto produzido');if(rendimento<=0)return toast('Informe o rendimento da receita');if(!receitaTemp.length)return toast('Adicione pelo menos um insumo');const obj={produtoId,rendimento,unidade,insumos:receitaTemp.map(x=>({...x})),updatedAt:new Date().toISOString()};if(id){const idx=(db.receitas||[]).findIndex(r=>r.id===id);if(idx>=0)db.receitas[idx]={...db.receitas[idx],...obj}}else{db.receitas=db.receitas||[];db.receitas.unshift({id:uid(),...obj,createdAt:new Date().toISOString()})}const prod=db.itens.find(i=>i.id===produtoId);log(id?'Ficha técnica editada':'Ficha técnica criada',prod?.nome||'produto');limparReceita(false);save();toast('Ficha técnica salva')}
+  async function salvarReceita(){const id=val('receitaId'),produtoId=val('receitaProduto'),rendimento=Number(val('receitaRendimento')||0),unidade=val('receitaUnidade')||'L';if(!produtoId)return toast('Selecione o produto produzido');if(rendimento<=0)return toast('Informe o rendimento da receita');if(!receitaTemp.length)return toast('Adicione pelo menos um insumo');const obj={produtoId,rendimento,unidade,insumos:receitaTemp.map(x=>({...x})),updatedAt:new Date().toISOString()};let receitaAtual=null;if(id){const idx=(db.receitas||[]).findIndex(r=>r.id===id);if(idx>=0){db.receitas[idx]={...db.receitas[idx],...obj};receitaAtual=db.receitas[idx];}}else{receitaAtual={id:uid(),onlineId:onlineId('REC'),...obj,createdAt:new Date().toISOString()};db.receitas=db.receitas||[];db.receitas.unshift(receitaAtual)}if(!receitaAtual)receitaAtual=(db.receitas||[]).find(r=>r.id===id);const prod=db.itens.find(i=>i.id===produtoId);log(id?'Ficha técnica editada':'Ficha técnica criada',prod?.nome||'produto');limparReceita(false);save();await supabaseSalvarReceita(receitaAtual);toast('Ficha técnica salva')}
   function editarReceita(id){const r=(db.receitas||[]).find(x=>x.id===id);if(!r)return;el('receitaId').value=r.id;el('receitaProduto').value=r.produtoId||'';el('receitaRendimento').value=r.rendimento||0;el('receitaUnidade').value=r.unidade||'L';receitaTemp=(r.insumos||[]).map(x=>({...x}));el('formReceitaTitulo').textContent='Editar ficha técnica';renderReceitaTemp();page('producao')}
-  function removerReceita(id){const r=(db.receitas||[]).find(x=>x.id===id);if(!r)return;if(!confirm('Remover esta ficha técnica?'))return;db.receitas=(db.receitas||[]).filter(x=>x.id!==id);log('Ficha técnica removida',id);save();toast('Ficha técnica removida')}
-  function registrarProducao(){const receitaId=val('producaoReceita'),qtd=Number(val('producaoQtd')||0);const r=(db.receitas||[]).find(x=>x.id===receitaId);if(!r)return toast('Selecione uma ficha técnica');if(qtd<=0)return toast('Informe a quantidade produzida');const fator=qtd/Number(r.rendimento||1);let custo=0;for(const ins of r.insumos||[]){const item=db.itens.find(i=>i.id===ins.itemId);const usado=Number(ins.qtd||0)*fator;if(!item)return toast('Um insumo da ficha não existe mais');if(Number(item.estoque||0)<usado)return toast(`Estoque insuficiente: ${item.nome} (precisa ${usado.toFixed(2)} ${item.unidade||'un'})`);}
+  async function removerReceita(id){const r=(db.receitas||[]).find(x=>x.id===id);if(!r)return;if(!confirm('Remover esta ficha técnica?'))return;db.receitas=(db.receitas||[]).filter(x=>x.id!==id);await supabaseRemoverReceita(r);log('Ficha técnica removida',id);save();toast('Ficha técnica removida')}
+  async function registrarProducao(){const receitaId=val('producaoReceita'),qtd=Number(val('producaoQtd')||0);const r=(db.receitas||[]).find(x=>x.id===receitaId);if(!r)return toast('Selecione uma ficha técnica');if(qtd<=0)return toast('Informe a quantidade produzida');const fator=qtd/Number(r.rendimento||1);let custo=0;for(const ins of r.insumos||[]){const item=db.itens.find(i=>i.id===ins.itemId);const usado=Number(ins.qtd||0)*fator;if(!item)return toast('Um insumo da ficha não existe mais');if(Number(item.estoque||0)<usado)return toast(`Estoque insuficiente: ${item.nome} (precisa ${usado.toFixed(2)} ${item.unidade||'un'})`);}
     for(const ins of r.insumos||[]){const item=db.itens.find(i=>i.id===ins.itemId);const usado=Number(ins.qtd||0)*fator;item.estoque=Number(item.estoque||0)-usado;custo+=Number(item.custo||0)*(usado/Math.max(Number(item.porcao||1),1));}
-    const prod=db.itens.find(i=>i.id===r.produtoId);if(!prod)return toast('Produto produzido não existe mais');prod.estoque=Number(prod.estoque||0)+qtd;if(qtd>0)prod.custo=Math.round((custo/qtd)*100)/100;db.producoes=db.producoes||[];db.producoes.unshift({id:uid(),receitaId,produtoId:r.produtoId,qtd,unidade:r.unidade,custo,data:new Date().toISOString(),insumos:(r.insumos||[]).map(ins=>({...ins,qtdUsada:Number(ins.qtd||0)*fator}))});log('Produção registrada',`${prod.nome} • ${qtd} ${r.unidade}`);el('producaoQtd').value='';save();supabaseSincronizarItensLocais();toast('Produção registrada')}
+    const prod=db.itens.find(i=>i.id===r.produtoId);if(!prod)return toast('Produto produzido não existe mais');prod.estoque=Number(prod.estoque||0)+qtd;if(qtd>0)prod.custo=Math.round((custo/qtd)*100)/100;const producao={id:uid(),onlineId:onlineId('PROD'),receitaId,produtoId:r.produtoId,qtd,unidade:r.unidade,custo,data:new Date().toISOString(),status:'finalizado',insumos:(r.insumos||[]).map(ins=>({...ins,qtdUsada:Number(ins.qtd||0)*fator}))};db.producoes=db.producoes||[];db.producoes.unshift(producao);log('Produção registrada',`${prod.nome} • ${qtd} ${r.unidade}`);el('producaoQtd').value='';save();await supabaseSalvarProducao(producao);await supabaseSincronizarItensLocais();toast('Produção registrada')}
   function renderProducao(){renderReceitaTemp();const lr=el('listaReceitas'),lp=el('listaProducoes'),pv=el('previewProducao');if(!lr)return;lr.innerHTML=(db.receitas||[]).map(r=>{const prod=db.itens.find(i=>i.id===r.produtoId);const custo=(r.insumos||[]).reduce((a,ins)=>{const item=db.itens.find(i=>i.id===ins.itemId);return a+(item?Number(item.custo||0)*(Number(ins.qtd||0)/Math.max(Number(item.porcao||1),1)):0)},0);return `<div class="list-item"><div style="flex:1"><strong>${prod?prod.nome:'Produto removido'}</strong><br><small>Rende ${r.rendimento} ${r.unidade} • custo estimado ${fmt(custo)}</small><br><small>${(r.insumos||[]).map(ins=>{const it=db.itens.find(i=>i.id===ins.itemId);return `${it?it.nome:'Item removido'} ${ins.qtd} ${it?it.unidade||'un':''}`}).join(' • ')}</small></div><div class="list-actions"><button class="mini secondary" onclick="App.editarReceita('${r.id}')">editar</button><button class="mini danger-btn" onclick="App.removerReceita('${r.id}')">remover</button></div></div>`}).join('')||'<p class="muted">Nenhuma ficha técnica cadastrada.</p>';
     if(lp)lp.innerHTML=(db.producoes||[]).slice(0,60).map(p=>{const prod=db.itens.find(i=>i.id===p.produtoId);return `<div class="list-item"><div><strong>${prod?prod.nome:'Produto removido'}</strong><br><small>${new Date(p.data).toLocaleString('pt-BR')} • ${p.qtd} ${p.unidade} • custo ${fmt(p.custo)}</small></div></div>`}).join('')||'<p class="muted">Nenhuma produção registrada.</p>';
     if(pv){const r=(db.receitas||[]).find(x=>x.id===val('producaoReceita'));const qtd=Number(val('producaoQtd')||0);if(!r){pv.innerHTML='<p class="muted">Selecione uma ficha para ver os insumos necessários.</p>'}else{const fator=qtd>0?qtd/Number(r.rendimento||1):1;pv.innerHTML=`<h4>Insumos necessários ${qtd>0?'para '+qtd+' '+r.unidade:'por receita'}</h4>`+(r.insumos||[]).map(ins=>{const it=db.itens.find(i=>i.id===ins.itemId);const precisa=Number(ins.qtd||0)*fator;const ok=it&&Number(it.estoque||0)>=precisa;return `<div class="list-item compact"><div><strong>${it?it.nome:'Item removido'}</strong><br><small>Precisa ${precisa.toFixed(2)} ${it?it.unidade||'un':''} • estoque ${it?it.estoque:0}</small></div><span class="pill ${ok?'':'red'}">${ok?'ok':'baixo'}</span></div>`}).join('')}}}
@@ -738,6 +738,81 @@ const App=(()=>{
     try{for(const c of (db.compras||[])){if(!c.supabase_id)await supabaseSalvarCompra(c)}db.sync.status='online';db.sync.lastSync=new Date().toISOString();Data.save(db)}catch(e){console.warn('Sincronizar compras:',e)}
   }
 
+  function idSupabaseItemByLocal(id){
+    const item=(db.itens||[]).find(i=>i.id===id||String(i.id||'')==='sbit_'+id||String(i.supabase_id||'')===String(id||''));
+    return item?.supabase_id||null;
+  }
+  function idLocalItemBySupabase(sid){
+    const item=(db.itens||[]).find(i=>String(i.supabase_id||'')===String(sid||'')||String(i.id||'')==='sbit_'+sid);
+    return item?.id||'';
+  }
+  function idSupabaseReceitaByLocal(id){
+    const r=(db.receitas||[]).find(x=>x.id===id||String(x.id||'')==='sbrec_'+id||String(x.supabase_id||'')===String(id||''));
+    return r?.supabase_id||null;
+  }
+  function idLocalReceitaBySupabase(sid){
+    const r=(db.receitas||[]).find(x=>String(x.supabase_id||'')===String(sid||'')||String(x.id||'')==='sbrec_'+sid);
+    return r?.id||'';
+  }
+  function mapReceitaSupabase(row){
+    const insumos=(row.insumos||[]).map(ins=>({...ins,itemId:idLocalItemBySupabase(ins.estoque_item_id)||ins.itemId||'',qtd:Number(ins.qtd||ins.quantidade||0)}));
+    return {id:'sbrec_'+row.id,supabase_id:row.id,onlineId:row.codigo||('REC-'+row.id),produtoId:idLocalItemBySupabase(row.produto_item_id),rendimento:Number(row.rendimento||0),unidade:row.unidade||'un',insumos,createdAt:row.criado_em||new Date().toISOString(),updatedAt:row.atualizado_em||row.criado_em||new Date().toISOString(),syncStatus:'sincronizado'};
+  }
+  function payloadReceitaSupabase(r){
+    const insumos=(r.insumos||[]).map(ins=>({itemId:ins.itemId,estoque_item_id:idSupabaseItemByLocal(ins.itemId),qtd:Number(ins.qtd||0),unidade:ins.unidade||''}));
+    return {loja_id:supabaseLojaId,codigo:r.onlineId||r.id||onlineId('REC'),produto_item_id:idSupabaseItemByLocal(r.produtoId),rendimento:Number(r.rendimento||0),unidade:r.unidade||'un',insumos,ativo:true,atualizado_em:new Date().toISOString()};
+  }
+  function mesclarReceitasSupabase(rows){
+    const remotas=(rows||[]).map(mapReceitaSupabase);
+    const remotasChaves=new Set(remotas.map(r=>r.onlineId||r.supabase_id));
+    const locais=(db.receitas||[]).filter(r=>!r.supabase_id&&!remotasChaves.has(r.onlineId));
+    const porChave=new Map();
+    [...remotas,...locais].forEach(r=>{const chave=r.supabase_id||r.onlineId||r.id;if(!porChave.has(chave))porChave.set(chave,r)});
+    db.receitas=[...porChave.values()];
+  }
+  async function supabaseCarregarReceitas(){
+    try{await supabaseGetLoja();await supabaseCarregarItens();const rows=await supabaseRequest('/receitas?select=*&order=criado_em.desc&limit=500');mesclarReceitasSupabase(rows||[]);Data.save(db);renderProducao();}
+    catch(e){console.warn('Supabase receitas:',e)}
+  }
+  async function supabaseSalvarReceita(r){
+    if(!r)return;
+    try{await supabaseGetLoja();if(!r.onlineId)r.onlineId=r.id||onlineId('REC');const payload=payloadReceitaSupabase(r);const sid=r.supabase_id||(String(r.id||'').startsWith('sbrec_')?String(r.id).replace('sbrec_',''):null);if(sid){await supabaseRequest('/receitas?id=eq.'+encodeURIComponent(sid),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});r.syncStatus='sincronizado';return;}const existente=await supabaseRequest('/receitas?select=id&codigo=eq.'+encodeURIComponent(r.onlineId)+'&limit=1');if(existente?.[0]?.id){r.supabase_id=existente[0].id;await supabaseRequest('/receitas?id=eq.'+encodeURIComponent(existente[0].id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});}else{const criado=await supabaseRequest('/receitas?select=id',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});if(criado?.[0]?.id)r.supabase_id=criado[0].id;}r.syncStatus='sincronizado';}
+    catch(e){console.warn('Salvar receita Supabase:',e);r.syncStatus='erro';toast('Ficha salva localmente, mas não sincronizou com Supabase.')}
+  }
+  async function supabaseRemoverReceita(r){
+    try{const sid=r?.supabase_id||(String(r?.id||'').startsWith('sbrec_')?String(r.id).replace('sbrec_',''):null);if(sid)await supabaseRequest('/receitas?id=eq.'+encodeURIComponent(sid),{method:'DELETE',headers:{Prefer:'return=minimal'}});}
+    catch(e){console.warn('Remover receita Supabase:',e)}
+  }
+  async function supabaseSincronizarReceitasLocais(){
+    try{for(const r of (db.receitas||[])){if(!r.supabase_id)await supabaseSalvarReceita(r)}db.sync.status='online';db.sync.lastSync=new Date().toISOString();Data.save(db)}catch(e){console.warn('Sincronizar receitas:',e)}
+  }
+  function mapProducaoSupabase(row){
+    return {id:'sbprod_'+row.id,supabase_id:row.id,onlineId:row.codigo||('PROD-'+row.id),receitaId:idLocalReceitaBySupabase(row.receita_id),produtoId:idLocalItemBySupabase(row.produto_item_id),qtd:Number(row.quantidade||0),unidade:row.unidade||'un',custo:Number(row.custo_total||0),data:row.data_producao||row.criado_em||new Date().toISOString(),status:row.status||'finalizado',obs:row.observacao||'',insumos:(row.insumos||[]).map(ins=>({...ins,itemId:idLocalItemBySupabase(ins.estoque_item_id)||ins.itemId||'',qtdUsada:Number(ins.qtdUsada||ins.quantidade_usada||ins.qtd||0)})),createdAt:row.criado_em||new Date().toISOString(),updatedAt:row.atualizado_em||row.criado_em||new Date().toISOString(),syncStatus:'sincronizado'};
+  }
+  function payloadProducaoSupabase(p){
+    const insumos=(p.insumos||[]).map(ins=>({...ins,estoque_item_id:idSupabaseItemByLocal(ins.itemId),quantidade_usada:Number(ins.qtdUsada||ins.qtd||0)}));
+    return {loja_id:supabaseLojaId,codigo:p.onlineId||p.id||onlineId('PROD'),receita_id:idSupabaseReceitaByLocal(p.receitaId),produto_item_id:idSupabaseItemByLocal(p.produtoId),quantidade:Number(p.qtd||0),unidade:p.unidade||'un',custo_total:Number(p.custo||0),data_producao:p.data||new Date().toISOString(),status:p.status||'finalizado',insumos,observacao:p.obs||'',atualizado_em:new Date().toISOString()};
+  }
+  function mesclarProducoesSupabase(rows){
+    const remotas=(rows||[]).map(mapProducaoSupabase);
+    const remotasChaves=new Set(remotas.map(p=>p.onlineId||p.supabase_id));
+    const locais=(db.producoes||[]).filter(p=>!p.supabase_id&&!remotasChaves.has(p.onlineId));
+    const porChave=new Map();
+    [...remotas,...locais].forEach(p=>{const chave=p.supabase_id||p.onlineId||p.id;if(!porChave.has(chave))porChave.set(chave,p)});
+    db.producoes=[...porChave.values()].sort((a,b)=>new Date(b.data||0)-new Date(a.data||0));
+  }
+  async function supabaseCarregarProducoes(){
+    try{await supabaseGetLoja();const rows=await supabaseRequest('/producoes?select=*&order=data_producao.desc,criado_em.desc&limit=500');mesclarProducoesSupabase(rows||[]);Data.save(db);renderProducao();}
+    catch(e){console.warn('Supabase produções:',e)}
+  }
+  async function supabaseSalvarProducao(p){
+    try{await supabaseGetLoja();if(!p.onlineId)p.onlineId=p.id||onlineId('PROD');const payload=payloadProducaoSupabase(p);const sid=p.supabase_id||(String(p.id||'').startsWith('sbprod_')?String(p.id).replace('sbprod_',''):null);if(sid){await supabaseRequest('/producoes?id=eq.'+encodeURIComponent(sid),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});p.syncStatus='sincronizado';return;}const existente=await supabaseRequest('/producoes?select=id&codigo=eq.'+encodeURIComponent(p.onlineId)+'&limit=1');if(existente?.[0]?.id){p.supabase_id=existente[0].id;await supabaseRequest('/producoes?id=eq.'+encodeURIComponent(existente[0].id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});}else{const criado=await supabaseRequest('/producoes?select=id',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});if(criado?.[0]?.id)p.supabase_id=criado[0].id;}p.syncStatus='sincronizado';}
+    catch(e){console.warn('Salvar produção Supabase:',e);p.syncStatus='erro';toast('Produção salva localmente, mas não sincronizou com Supabase.')}
+  }
+  async function supabaseSincronizarProducoesLocais(){
+    try{for(const p of (db.producoes||[])){if(!p.supabase_id)await supabaseSalvarProducao(p)}db.sync.status='online';db.sync.lastSync=new Date().toISOString();Data.save(db)}catch(e){console.warn('Sincronizar produções:',e)}
+  }
+
   function mapPedidoSupabase(row,itens=[],cliente=null){
     const data=row.criado_em||row.created_at||new Date().toISOString();
     const numero=(row.codigo||'').split('-').pop()||String((db.pedidos||[]).length+1).padStart(4,'0');
@@ -905,7 +980,7 @@ const App=(()=>{
     try{await supabaseRequest('/pedidos?id=eq.'+encodeURIComponent(p.supabase_id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status:statusParaSupabase(p.status),forma_pagamento:p.pagamento||p.pagamentoPrevisto||'PIX',valor_total:Number(p.total||0)})});}catch(e){console.warn('Update pedido Supabase:',e)}
   }
   async function supabaseInicializar(){
-    try{await supabaseGetLoja();await supabaseCarregarItens();if(!isPublicClient()){await supabaseSincronizarItensLocais();await supabaseCarregarCompras();await supabaseSincronizarComprasLocais();}await supabaseCarregarPedidos();setInterval(()=>{if(!isPublicClient()){supabaseCarregarItens();supabaseCarregarCompras();supabaseCarregarPedidos()}},8000);}catch(e){console.warn('Supabase init:',e)}
+    try{await supabaseGetLoja();await supabaseCarregarItens();if(!isPublicClient()){await supabaseSincronizarItensLocais();await supabaseCarregarCompras();await supabaseSincronizarComprasLocais();await supabaseCarregarReceitas();await supabaseSincronizarReceitasLocais();await supabaseCarregarProducoes();await supabaseSincronizarProducoesLocais();}await supabaseCarregarPedidos();setInterval(()=>{if(!isPublicClient()){supabaseCarregarItens();supabaseCarregarCompras();supabaseCarregarReceitas();supabaseCarregarProducoes();supabaseCarregarPedidos()}},8000);}catch(e){console.warn('Supabase init:',e)}
   }
 
   function renderOnlineReady(){
