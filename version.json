@@ -1,5 +1,5 @@
 {
-  "version": "1.1.10",
-  "name": "Correção validação de estoque em pedidos",
-  "date": "2026-06-30"
+  "version": "1.1.13",
+  "name": "Salva endereço ao aprovar cliente",
+  "date": "2026-07-01"
 }
