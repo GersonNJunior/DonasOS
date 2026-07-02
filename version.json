@@ -1,5 +1,5 @@
 {
-  "version": "1.1.22",
-  "name": "Correção Persistência Real Pedidos",
-  "date": "2026-07-01"
+  "version": "1.2.5",
+  "name": "Hardening Persistencia Supabase",
+  "date": "2026-07-02"
 }

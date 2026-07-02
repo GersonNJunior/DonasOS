@@ -1,4 +1,1 @@
-Donas OS 1.1.21 - Correção Persistência de Ações dos Pedidos
-
-Não precisa rodar SQL.
-Corrige ações que eram desfeitas após sincronização com Supabase.
+DonasOS 1.1.24 - Correcoes dos ajustes operacionais, portal, producao, cupons, insights e horarios.

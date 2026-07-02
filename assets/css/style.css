@@ -295,3 +295,35 @@ body.public-client .empty-summary .inline-link:active{color:#fff !important;}
 
 .link-button{background:none;border:0;padding:0;color:inherit;text-decoration:underline;cursor:pointer;font:inherit}
 .link-button:hover{opacity:.85}
+
+/* v1.1.24 refinamentos operacionais */
+.compact-option{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;cursor:pointer;min-height:118px;}
+.qty-inline.qty-stepper{width:100%;margin-top:10px;padding:8px;border-radius:14px;background:rgba(255,247,236,.95);border:1px solid #ead2b8;display:grid;grid-template-columns:34px 1fr 34px;align-items:center;gap:8px;color:#4a1822;}
+.qty-inline.qty-stepper button{width:34px;height:34px;border-radius:50%;border:0;background:#7b2737;color:#fff;font-size:20px;font-weight:900;line-height:1;cursor:pointer;box-shadow:0 4px 10px rgba(74,24,34,.18);}
+.qty-inline.qty-stepper strong{font-size:12px;text-align:center;line-height:1.15;}
+.qty-inline.qty-stepper small{grid-column:1/4;text-align:center;font-size:10px;color:#7c5b45;font-weight:700;}
+.schedule-grid{display:grid!important;grid-template-columns:1fr;gap:12px;margin:10px 0 14px;}
+.schedule-day{background:rgba(255,255,255,.62);border:1px solid var(--line);border-radius:16px;padding:12px;display:grid;gap:10px;}
+.schedule-day-head{display:flex!important;align-items:center;gap:8px;padding:0!important;border:0!important;background:transparent!important;font-size:14px!important;color:var(--text)!important;}
+.schedule-slots{display:grid;gap:8px;}
+.schedule-slot{display:grid;grid-template-columns:80px 1fr 1fr;gap:8px;align-items:center;}
+.schedule-slot span{font-size:11px;font-weight:800;color:var(--muted);}
+.schedule-slot input[type="time"]{width:100%;padding:8px 10px;}
+.insight-filter-row{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:10px 0 18px;}
+.compact-date{max-width:170px;margin:0;}
+.compact-date input{width:160px;}
+@media(max-width:720px){.schedule-slot{grid-template-columns:1fr 1fr}.schedule-slot span{grid-column:1/3}.compact-date,.compact-date input{width:100%;max-width:100%;}.insight-filter-row{align-items:stretch}.insight-filter-row button{width:100%;}}
+
+/* v1.1.25 - ajuste visual do seletor de quantidade do portal */
+.online-menu-list .portal-cat h4{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.portal-free-label{display:inline-flex;align-items:center;border-radius:999px;background:#fff1d8;border:1px solid #d8b47a;color:#7b2737;font-size:11px;font-weight:900;padding:4px 9px;line-height:1;}
+.online-menu-list .compact-option.selected .qty-stepper,
+.option.selected .qty-inline.qty-stepper{background:#fff8ed!important;border-color:#e4c49f!important;color:#4a1822!important;}
+.online-menu-list .compact-option.selected .qty-stepper strong,
+.option.selected .qty-inline.qty-stepper strong{color:#4a1822!important;font-size:15px!important;text-align:center!important;margin:0!important;}
+.online-menu-list .compact-option.selected .qty-stepper button,
+.option.selected .qty-inline.qty-stepper button{background:#7b2737!important;color:#fff!important;border:0!important;}
+.online-menu-list .compact-option.selected .qty-stepper small,
+.option.selected .qty-inline.qty-stepper small{display:none!important;}
+/* v1.2.0 */
+.coupon-row{display:flex;gap:8px;align-items:center}.coupon-row input{flex:1}.coupon-row .mini{height:40px;white-space:nowrap}.discount{color:#0f8a52}.compact-stats{grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}.compact-stats .stat{padding:10px}
