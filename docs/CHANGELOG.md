@@ -1,4 +1,10 @@
 
+## 1.2.6 - Correção Porções e Baixa de Estoque
+- Alinha Montar Pedido ADM com controle por porções igual ao portal.
+- Corrige baixa de estoque convertendo unidade da porção para unidade real do estoque.
+- Mantém massa e molho como porções fixas.
+
+
 ## 1.1.10 - Correção validação de estoque
 
 - Corrige validação de estoque para pedidos com itens vindos do Supabase.
@@ -120,3 +126,9 @@
 - Renomeia botões de ação do portal para linguagem mais clara ao cliente.
 - Adiciona confirmação antes de limpar pedido.
 - Ajusta navegação do carrinho pelo rodapé.
+
+
+## 1.2.7 - Visual Montar Pedido ADM
+- Padroniza seletor + e - do Montar Pedido interno com o visual do Portal.
+- Corrige estrutura HTML dos cards para evitar botões grandes/desalinhados.
+- Mantém regras de estoque por porção sem alterações.
