@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Donas OS 1.2.7 - Visual Montar Pedido ADM</title>
+  <title>Donas OS 1.3.2 - Correções Pré-Inauguração</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
     <aside class="sidebar">
       <div class="brand">
         <img class="brand-logo" src="assets/img/logo-donas-da-massa.png" alt="Logo Donas da Massa">
-        <div><strong>Donas da Massa</strong><span id="internalName">Donas OS 1.2.7</span></div>
+        <div><strong>Donas da Massa</strong><span id="internalName">Donas OS 1.3.2</span></div>
       </div>
       <nav class="nav nav-modular">
         <details class="nav-group" open>
@@ -47,7 +47,7 @@
       <div class="sidebar-card">
         <small>Caixa atual</small>
         <strong id="sideCaixa">R$ 0,00</strong>
-        <span id="sideMode">Local/offline • preparado para Supabase</span>
+        <span id="sideMode">Online • Supabase sincronizado</span>
       </div>
     </aside>
 
@@ -239,6 +239,19 @@
       </section>
 
       <section id="page-estoque" class="page">
+        <div class="card setup-card" id="assistentePorcoesCard">
+          <div class="online-section-head">
+            <span class="online-section-label">Configuração operacional</span>
+            <h3>Assistente de porções e unidades</h3>
+            <p>Use para iniciar o estoque, cadastrar novos ingredientes ou alterar o tamanho das porções. Ele puxa automaticamente os itens cadastrados em Massa, Molho, Proteína, Complemento e Finalização.</p>
+          </div>
+          <div class="setup-actions">
+            <button type="button" class="secondary" onclick="App.renderAssistentePorcoes()">Atualizar lista</button>
+            <button type="button" class="primary" onclick="App.salvarAssistentePorcoes()">Salvar configuração de porções</button>
+          </div>
+          <div id="assistentePorcoesLista" class="setup-table"></div>
+          <p class="muted">Dica: se a mussarela for usada picada e ralada, cadastre como dois itens diferentes. Ex.: Mussarela picada em Complemento e Mussarela ralada em Finalização.</p>
+        </div>
         <div class="inventory-layout">
           <div class="card inventory-form-card">
             <h3 id="formItemTitulo">Cadastrar item</h3>
@@ -475,7 +488,7 @@
             <p class="muted">Configuração de loja online, horários e sincronização com Supabase.</p>
             <div id="onlineStatus"></div>
             <div class="row">
-              <div class="field"><label>Modo de dados</label><select id="syncModo"><option value="local">Local / Offline</option><option value="online">Online / Supabase</option></select></div>
+              <div class="field"><label>Modo de dados</label><select id="syncModo"><option value="online">Online / Supabase</option></select></div>
               <div class="field"><label>Loja online</label><label class="check-line"><input id="syncLojaAberta" type="checkbox"> Loja aberta para pedidos externos</label></div>
             </div>
             <div class="field"><label>Funcionamento da loja</label><select id="syncHorarioModo"><option value="manual">Manual</option><option value="automatico">Automático por horário</option></select><small class="hint">No modo automático, o Portal Cliente abre/fecha conforme os horários abaixo. O botão manual continua disponível para exceções.</small></div>
@@ -493,7 +506,7 @@
             <button class="primary full" onclick="App.salvarOnlineReady()">Salvar preparação online</button>
             <button class="secondary full" onclick="App.prepararIdsOnline()">Verificar IDs universais</button>
           </div>
-          <div class="card"><h3>Registros locais</h3><div id="onlineContagens"></div></div>
+          <div class="card"><h3>Registros sincronizados</h3><div id="onlineContagens"></div></div>
           <div class="card"><h3>Checklist técnico</h3><div id="onlineChecklist"></div></div>
           <div class="card"><h3>Próxima etapa</h3><p class="muted">Quando aprovarmos o modo online, criaremos duas interfaces: <strong>Painel interno</strong> e <strong>Cardápio do cliente</strong>. O cliente montará o pedido, o pedido entrará como aguardando confirmação e será redirecionado para o WhatsApp.</p><div class="db-box"><strong>Fluxo atual local:</strong><br>Cliente monta pedido → Donas OS recebe → mensagem WhatsApp pronta → confirmação manual de pagamento → cozinha prepara.<br><br><strong>Próximo:</strong> publicar o Portal Cliente em link externo e conectar ao Supabase.</div></div>
         </div>
@@ -624,7 +637,7 @@
             <label class="check-line"><input id="cfgModoOperacao" type="checkbox"> Iniciar em modo operação</label>
             <button class="primary full" onclick="App.salvarConfig()">Salvar configurações</button>
           </div>
-          <div class="card"><h3>Banco de dados</h3><p class="muted">Esta versão usa LocalStorage, mas a camada de dados já foi isolada para futura integração com Supabase gratuito.</p><div class="db-box"><strong>Status:</strong> Local/offline<br><strong>Próximo:</strong> autenticação e tabelas Supabase<br><strong>Versão:</strong> 3.1 Portal Cliente Multi-pratos</div><button class="secondary full" onclick="App.restaurarUltimoSeguro()">Restaurar último ponto seguro</button></div>
+          <div class="card"><h3>Banco de dados</h3><p class="muted">Dados operacionais sincronizados no Supabase. O backup local permanece apenas como ponto de segurança do navegador.</p><div class="db-box"><strong>Status:</strong> Online/Supabase<br><strong>Hospedagem:</strong> Cloudflare Pages<br><strong>Backup local:</strong> disponível apenas para emergência</div><button class="secondary full" onclick="App.restaurarUltimoSeguro()">Restaurar último ponto seguro</button></div>
           <div class="card"><h3>Registro de ações</h3><p class="muted">Histórico interno para acompanhar criações, exclusões, pagamentos, backups e mudanças importantes.</p><div id="listaLogs" class="log-list"></div><button class="secondary full" onclick="App.limparLogs()">Limpar registros</button></div>
         </div>
       </section>
