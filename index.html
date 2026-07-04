@@ -248,18 +248,23 @@
       </section>
 
       <section id="page-estoque" class="page">
-        <div class="card setup-card" id="assistentePorcoesCard">
-          <div class="online-section-head">
-            <span class="online-section-label">Configuração operacional</span>
-            <h3>Assistente de porções e unidades</h3>
-            <p>Use para iniciar o estoque, cadastrar novos ingredientes ou alterar o tamanho das porções. Ele puxa automaticamente os itens cadastrados em Massa, Molho, Proteína, Complemento e Finalização.</p>
+        <div class="card setup-card collapsed" id="assistentePorcoesCard">
+          <div class="online-section-head setup-title-row">
+            <div>
+              <span class="online-section-label">Configuração operacional</span>
+              <h3>Assistente de porções e unidades</h3>
+              <p>Use quando iniciar o estoque, cadastrar novos ingredientes ou alterar o tamanho das porções.</p>
+            </div>
+            <button type="button" class="secondary setup-toggle" id="assistentePorcoesToggle" onclick="App.toggleAssistentePorcoes()">Abrir assistente</button>
           </div>
-          <div class="setup-actions">
-            <button type="button" class="secondary" onclick="App.renderAssistentePorcoes()">Atualizar lista</button>
-            <button type="button" class="primary" onclick="App.salvarAssistentePorcoes()">Salvar configuração de porções</button>
+          <div class="setup-body" id="assistentePorcoesBody">
+            <div class="setup-actions">
+              <button type="button" class="secondary" onclick="App.renderAssistentePorcoes(true)">Atualizar lista</button>
+              <button type="button" class="primary" onclick="App.salvarAssistentePorcoes()">Salvar configuração de porções</button>
+            </div>
+            <div id="assistentePorcoesLista" class="setup-table"></div>
+            <p class="muted">Dica: se a mussarela for usada picada e ralada, cadastre como dois itens diferentes. Ex.: Mussarela picada em Complemento e Mussarela ralada em Finalização.</p>
           </div>
-          <div id="assistentePorcoesLista" class="setup-table"></div>
-          <p class="muted">Dica: se a mussarela for usada picada e ralada, cadastre como dois itens diferentes. Ex.: Mussarela picada em Complemento e Mussarela ralada em Finalização.</p>
         </div>
         <div class="inventory-layout">
           <div class="card inventory-form-card">

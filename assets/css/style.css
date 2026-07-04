@@ -331,12 +331,19 @@ body.public-client .empty-summary .inline-link:active{color:#fff !important;}
 
 /* Assistente de porções */
 .setup-card{margin-bottom:18px}
+.setup-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.setup-toggle{white-space:nowrap;margin-top:4px}
+.setup-card.collapsed .setup-body{display:none}
 .setup-actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 16px}
 .setup-table{display:grid;gap:8px}
 .setup-head,.setup-row{display:grid;grid-template-columns:1.4fr .8fr .8fr .8fr;gap:10px;align-items:center}
 .setup-head{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#7b4a2c;padding:0 4px}
 .setup-row{padding:10px;border:1px solid rgba(123,74,44,.22);border-radius:14px;background:#fffaf3}
 .setup-row input,.setup-row select{width:100%;min-height:40px;border:1px solid rgba(123,74,44,.3);border-radius:12px;padding:8px;background:#fff;color:#4b1826}
-@media(max-width:760px){.setup-head{display:none}.setup-row{grid-template-columns:1fr}.setup-row:before{content:'Configurar porção';font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#9b673e;font-weight:700}}
+.setup-item-info{display:flex;align-items:center;gap:10px;min-width:0}
+.setup-thumb{width:48px;height:48px;object-fit:cover;border-radius:14px;background:#fff;border:1px solid rgba(123,74,44,.18);box-shadow:0 6px 14px rgba(80,35,10,.08);flex:0 0 auto}
+.setup-thumb.fallback{display:grid;place-items:center;font-size:24px}
+.setup-item-text{min-width:0}.setup-item-text strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.setup-item-text small{color:#8d6b54}
+@media(max-width:760px){.setup-title-row{display:block}.setup-toggle{width:100%;margin-top:10px}.setup-head{display:none}.setup-row{grid-template-columns:1fr}.setup-row:before{content:'Configurar porção';font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#9b673e;font-weight:700}}
 
 .origin-pill{font-weight:900;border:1px solid rgba(0,0,0,.06)}.origin-online{background:#e5f2ff!important;color:#1f5d8f!important}.origin-interno{background:#f0e7ff!important;color:#5c3b8a!important}.pedido-top{flex-wrap:wrap}.kitchen-ticket .origin-pill{vertical-align:middle;margin-right:4px}.pedido-card .pedido-top .status{margin-left:auto}
