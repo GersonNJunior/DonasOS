@@ -852,10 +852,18 @@ const App=(()=>{
       config:{
         taxaEntrega:Number(db.config.taxaEntrega||0),
         raioEntrega:db.config.raioEntrega||'',
+        tempoPreparo:Number(db.config.tempoPreparo||0),
         complementosGratis:Number(db.config.complementosGratis||0),
         proteinasGratis:Number(db.config.proteinasGratis||0),
+        finalizacoesGratis:db.config.finalizacoesGratis===''?'':Number(db.config.finalizacoesGratis??1),
         metaDiaria:Number(db.config.metaDiaria||0),
-        nomeInterno:db.config.nomeInterno||'Donas OS'
+        nomeInterno:db.config.nomeInterno||'Donas OS',
+        adminSenha:db.config.adminSenha||ADMIN_DEFAULT_PASS,
+        operacaoSenha:db.config.operacaoSenha||OPERACAO_DEFAULT_PASS,
+        modoOperacao:!!db.config.modoOperacao,
+        cnpj:db.config.cnpj||'',
+        email:db.config.email||'',
+        enderecoEmpresa:db.config.enderecoEmpresa||''
       },
       atualizado_em:new Date().toISOString()
     };
@@ -1893,17 +1901,64 @@ const App=(()=>{
     if(mobileNav)mobileNav.hidden=role!=='operacao';
   }
 
+  function togglePasswordInput(id,btn){
+    const inp=el(id);
+    if(!inp)return;
+    const show=inp.type==='password';
+    inp.type=show?'text':'password';
+    if(btn){btn.textContent=show?'🙈':'👁️';btn.setAttribute('aria-label',show?'Ocultar senha':'Mostrar senha');}
+  }
+
   function mostrarLoginAdmin(){
     document.body.classList.add('login-required');
     const wrap=document.createElement('div');
     wrap.id='adminLoginOverlay';
     wrap.className='admin-login-overlay';
-    wrap.innerHTML=`<div class="admin-login-card"><h2>🍝 Donas OS</h2><p class="muted">Escolha o perfil de acesso</p><div class="login-profile-tabs"><button class="active" id="loginPerfilAdmin" type="button">Administrador</button><button id="loginPerfilOperacao" type="button">Operação</button></div><input id="adminLoginSenha" type="password" placeholder="Senha" autocomplete="current-password"><button class="primary full" id="adminLoginBtn" type="button">Entrar</button><small class="hint" id="loginHint">Administrador tem acesso completo. Operação abre somente Pedidos, Cozinha, Fazer Pedido, Estoque e Online Ready.</small></div>`;
+    wrap.innerHTML=`<div class="admin-login-card"><h2>🍝 Donas OS</h2><p class="muted">Escolha o perfil de acesso</p><div class="login-profile-tabs"><button class="active" id="loginPerfilAdmin" type="button">Administrador</button><button id="loginPerfilOperacao" type="button">Operação</button></div><div class="password-row"><input id="adminLoginSenha" type="password" placeholder="Senha" autocomplete="current-password"><button type="button" class="password-toggle" id="loginToggleSenha" aria-label="Mostrar senha">👁️</button></div><div class="login-error" id="loginErro">Senha incorreta. Verifique a senha e tente novamente.</div><button class="primary full" id="adminLoginBtn" type="button">Entrar</button><small class="hint" id="loginHint">Administrador tem acesso completo. Operação abre somente Pedidos, Cozinha, Fazer Pedido, Estoque e Online Ready.</small></div>`;
     document.body.appendChild(wrap);
     let perfilSelecionado='admin';
-    const setPerfil=(p)=>{perfilSelecionado=p;el('loginPerfilAdmin')?.classList.toggle('active',p==='admin');el('loginPerfilOperacao')?.classList.toggle('active',p==='operacao');const inp=el('adminLoginSenha');if(inp){inp.value='';inp.placeholder=p==='admin'?'Senha do ADM':'Senha da Operação';inp.focus();}const hint=el('loginHint');if(hint)hint.textContent=p==='admin'?'Administrador tem acesso completo.':'Operação: Pedidos, Cozinha, Fazer Pedido, Estoque e Online Ready.';};
-    const entrar=()=>{const senha=(el('adminLoginSenha')?.value||'').trim();const correta=perfilSelecionado==='admin'?(db?.config?.adminSenha||ADMIN_DEFAULT_PASS):(db?.config?.operacaoSenha||OPERACAO_DEFAULT_PASS);if(senha===correta){sessionStorage.setItem(ADMIN_SESSION_KEY,'ok');sessionStorage.setItem(ADMIN_ROLE_KEY,perfilSelecionado);wrap.remove();document.body.classList.remove('login-required');init();}else{toast('Senha incorreta.')}};
-    setTimeout(()=>{el('loginPerfilAdmin')?.addEventListener('click',()=>setPerfil('admin'));el('loginPerfilOperacao')?.addEventListener('click',()=>setPerfil('operacao'));setPerfil('admin');el('adminLoginBtn')?.addEventListener('click',entrar);el('adminLoginSenha')?.addEventListener('keydown',e=>{if(e.key==='Enter')entrar();});},50);
+    let loginBusy=false;
+    const erro=el('loginErro');
+    const limparErro=()=>{if(erro)erro.style.display='none'};
+    const setPerfil=(p)=>{perfilSelecionado=p;el('loginPerfilAdmin')?.classList.toggle('active',p==='admin');el('loginPerfilOperacao')?.classList.toggle('active',p==='operacao');const inp=el('adminLoginSenha');if(inp){inp.value='';inp.type='password';inp.placeholder=p==='admin'?'Senha do ADM':'Senha da Operação';inp.focus();}const tg=el('loginToggleSenha');if(tg)tg.textContent='👁️';const hint=el('loginHint');if(hint)hint.textContent=p==='admin'?'Administrador tem acesso completo.':'Operação: Pedidos, Cozinha, Fazer Pedido, Estoque e Online Ready.';limparErro();};
+    const entrar=async()=>{
+      if(loginBusy)return;
+      loginBusy=true;
+      const btn=el('adminLoginBtn');
+      if(btn)btn.textContent='Entrando...';
+      try{
+        // Busca configuração atual do Supabase antes de validar a senha.
+        // Assim, senha alterada no ADM vale imediatamente em qualquer navegador.
+        if(supabaseAtivo()){
+          try{await supabaseGetLoja(true);Data.save(db);}catch(e){console.warn('Não consegui atualizar senha do Supabase antes do login:',e)}
+        }
+        const senha=(el('adminLoginSenha')?.value||'').trim();
+        const correta=perfilSelecionado==='admin'?(db?.config?.adminSenha||ADMIN_DEFAULT_PASS):(db?.config?.operacaoSenha||OPERACAO_DEFAULT_PASS);
+        if(senha===correta){
+          sessionStorage.setItem(ADMIN_SESSION_KEY,'ok');
+          sessionStorage.setItem(ADMIN_ROLE_KEY,perfilSelecionado);
+          wrap.remove();
+          document.body.classList.remove('login-required');
+          init();
+        }else{
+          if(erro)erro.style.display='block';
+          const inp=el('adminLoginSenha');
+          if(inp){inp.focus();inp.select();}
+        }
+      }finally{
+        loginBusy=false;
+        if(btn)btn.textContent='Entrar';
+      }
+    };
+    setTimeout(()=>{
+      el('loginPerfilAdmin')?.addEventListener('click',()=>setPerfil('admin'));
+      el('loginPerfilOperacao')?.addEventListener('click',()=>setPerfil('operacao'));
+      el('loginToggleSenha')?.addEventListener('click',()=>togglePasswordInput('adminLoginSenha',el('loginToggleSenha')));
+      setPerfil('admin');
+      el('adminLoginBtn')?.addEventListener('click',entrar);
+      el('adminLoginSenha')?.addEventListener('input',limparErro);
+      el('adminLoginSenha')?.addEventListener('keydown',e=>{if(e.key==='Enter')entrar();});
+    },50);
   }
 
   function renderAll(){
@@ -1936,7 +1991,7 @@ const App=(()=>{
       requestAnimationFrame(()=>{restore();setTimeout(restore,0);setTimeout(restore,120);});
     }
   }
-  function init(){try{const q=new URLSearchParams(location.search);if(!q.has('admin')&&!String(location.hash||'').includes('admin'))document.body.classList.add('public-client');else document.body.classList.add('admin-mode');}catch(e){document.body.classList.add('public-client')}if(document.body.classList.contains('admin-mode')&&!sessionStorage.getItem(ADMIN_SESSION_KEY)){mostrarLoginAdmin();document.body.classList.remove('booting');document.body.classList.add('boot-ready');return;}if(document.body.classList.contains('admin-mode')&&!sessionStorage.getItem(ADMIN_ROLE_KEY))sessionStorage.setItem(ADMIN_ROLE_KEY,'admin');document.querySelectorAll('button:not([type])').forEach(b=>b.setAttribute('type','button'));document.addEventListener('submit',ev=>ev.preventDefault());document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',ev=>{ev.preventDefault();page(b.dataset.page)}));document.querySelectorAll('.mobile-op-nav button').forEach(b=>b.addEventListener('click',ev=>{ev.preventDefault();page(b.dataset.opPage)}));['clientePedido','tipoPedido','pagamentoPedido','obsPedido','pedidoCep','pedidoRua','pedidoNumeroEndereco','pedidoComplemento','enderecoPedido','pedidoBairro','bairroPedido','pedidoCidade','pedidoUf'].forEach(id=>{if(el(id))el(id).addEventListener('input',renderResumo)});['cfgNome','cfgSlogan','cfgCnpj','cfgEmail','cfgEnderecoEmpresa','cfgInstagram','cfgPix','cfgWhatsapp','cfgTaxa','cfgRaioEntrega','cfgTempoPreparo','cfgGratis','cfgProteinasGratis','cfgFinalizacoesGratis','cfgMetaDiaria','cfgNomeInterno','cfgAdminSenha','cfgOperacaoSenha','cfgModoOperacao'].forEach(id=>{const x=el(id);if(x){['focus','input','change'].forEach(ev=>x.addEventListener(ev,()=>{configEditing=true;configLastUserInput=Date.now();}));}});
+  function init(){try{const q=new URLSearchParams(location.search);if(!q.has('admin')&&!String(location.hash||'').includes('admin'))document.body.classList.add('public-client');else document.body.classList.add('admin-mode');}catch(e){document.body.classList.add('public-client')}if(document.body.classList.contains('admin-mode')&&!sessionStorage.getItem(ADMIN_SESSION_KEY)){mostrarLoginAdmin();document.body.classList.remove('booting');document.body.classList.add('boot-ready');return;}if(document.body.classList.contains('admin-mode')&&!sessionStorage.getItem(ADMIN_ROLE_KEY))sessionStorage.setItem(ADMIN_ROLE_KEY,'admin');document.querySelectorAll('button:not([type])').forEach(b=>b.setAttribute('type','button'));document.addEventListener('submit',ev=>ev.preventDefault());document.querySelectorAll('[data-toggle-password]').forEach(btn=>btn.addEventListener('click',()=>togglePasswordInput(btn.dataset.togglePassword,btn)));document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',ev=>{ev.preventDefault();page(b.dataset.page)}));document.querySelectorAll('.mobile-op-nav button').forEach(b=>b.addEventListener('click',ev=>{ev.preventDefault();page(b.dataset.opPage)}));['clientePedido','tipoPedido','pagamentoPedido','obsPedido','pedidoCep','pedidoRua','pedidoNumeroEndereco','pedidoComplemento','enderecoPedido','pedidoBairro','bairroPedido','pedidoCidade','pedidoUf'].forEach(id=>{if(el(id))el(id).addEventListener('input',renderResumo)});['cfgNome','cfgSlogan','cfgCnpj','cfgEmail','cfgEnderecoEmpresa','cfgInstagram','cfgPix','cfgWhatsapp','cfgTaxa','cfgRaioEntrega','cfgTempoPreparo','cfgGratis','cfgProteinasGratis','cfgFinalizacoesGratis','cfgMetaDiaria','cfgNomeInterno','cfgAdminSenha','cfgOperacaoSenha','cfgModoOperacao'].forEach(id=>{const x=el(id);if(x){['focus','input','change'].forEach(ev=>x.addEventListener(ev,()=>{configEditing=true;configLastUserInput=Date.now();}));}});
     if(el('producaoQtd')) el('producaoQtd').addEventListener('input',()=>{renderProducao();});
     ['pedido','portal','cli'].forEach(prefix=>{const cep=el(prefix+'Cep');if(cep)cep.addEventListener('blur',()=>buscarCep(prefix));});if(el('producaoReceita')) el('producaoReceita').addEventListener('change',()=>{renderProducao();});if(el('telefonePedido')){el('telefonePedido').addEventListener('input',()=>{renderResumo();buscarClientesPedido()})}if(el('portalTelefone')){el('portalTelefone').addEventListener('input',()=>sincronizarTelefonePortal('top'))}if(el('portalTelefoneFinal')){el('portalTelefoneFinal').addEventListener('input',()=>sincronizarTelefonePortal('final'))}if(el('compraData')&&!el('compraData').value)el('compraData').value=hoje();if(el('insightDataIni')&&!el('insightDataIni').value)el('insightDataIni').value=hojeLocal();if(el('insightDataFim')&&!el('insightDataFim').value)el('insightDataFim').value=hojeLocal();renderAll();aplicarModoOperacao();aplicarPerfilAcesso();const last=localStorage.getItem(KEY+'_last_page');if(isPublicClient())page('portal');else if(perfilAtual()==='operacao')page(paginaPermitidaOperacao(last)?last:'pedidos');else if(last&&el('page-'+last))page(last);supabaseInicializar();document.body.classList.remove('booting');document.body.classList.add('boot-ready')}
   return{init,page,renderAll,toggleItem,setQtdItem,setPorcaoItem,adicionarPratoPedido,removerPratoPedido,finalizarPedido,limparPedido,atualizarStatus,confirmarPagamento,registrarPagamento,excluirPedido,confirmarExcluirPedido,escolherIcone,salvarItem,editarItem,limparFormItem,removerItem,salvarCliente,editarCliente,limparCliente,removerCliente,aprovarClientePendente,reprovarClientePendente,buscarCep,salvarMovimentacao,removerMovimentacao,salvarConfig,verPedido,fecharModal,exportarBackup,importarBackup,buscarClientesPedido,selecionarClientePedido,carregarImagemMarketing,salvarMarketing,editarMarketing,limparMarketing,removerMarketing,salvarFavoritoPedido,alternarModoOperacao,adicionarMural,concluirMural,removerMural,fecharCaixa,registrarFechamento,logoutAdmin,restaurarUltimoSeguro,limparLogs,salvarCompra,editarCompra,limparCompra,removerCompra,adicionarInsumoReceita,removerInsumoReceita,salvarReceita,editarReceita,removerReceita,limparReceita,registrarProducao,renderProducao,renderRelatorios,imprimirRelatorio,atualizarInsightsSupabase,salvarOnlineReady,prepararIdsOnline,salvarCupom,editarCupom,limparCupomForm,removerCupom,renderAssistentePorcoes,salvarAssistentePorcoes,toggleAssistentePorcoes,fecharAvisoLojaFechada,mostrarAvisoLojaFechada,aplicarCupomPortal,aplicarCupomPedidoInterno,usarFavorito,removerFavorito,abrirEditarDadosPedido,salvarDadosPedido,editarPedido,renderPortalCliente,scrollPortalTo,scrollPortalToCategory,irParaCheckoutPortal,sincronizarTelefonePortal,togglePortalItem,setPortalQtd,setPortalPorcao,adicionarPratoPortal,removerPratoPortal,limparPortalCliente,criarPedidoPortal,copiarMensagemPortal,confirmarPedidoPortal,buscarClientePortal,selecionarClientePortalOnline,repetirUltimoPedidoPortal}
