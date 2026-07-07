@@ -347,3 +347,75 @@ body.public-client .empty-summary .inline-link:active{color:#fff !important;}
 @media(max-width:760px){.setup-title-row{display:block}.setup-toggle{width:100%;margin-top:10px}.setup-head{display:none}.setup-row{grid-template-columns:1fr}.setup-row:before{content:'Configurar porção';font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#9b673e;font-weight:700}}
 
 .origin-pill{font-weight:900;border:1px solid rgba(0,0,0,.06)}.origin-online{background:#e5f2ff!important;color:#1f5d8f!important}.origin-interno{background:#f0e7ff!important;color:#5c3b8a!important}.pedido-top{flex-wrap:wrap}.kitchen-ticket .origin-pill{vertical-align:middle;margin-right:4px}.pedido-card .pedido-top .status{margin-left:auto}
+
+
+/* DonasOS v1.1 - perfis de acesso */
+.login-profile-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 4px}
+.login-profile-tabs button{border:1px solid rgba(123,46,46,.18);background:#fff8ef;color:#7b2e2e;border-radius:14px;padding:11px 10px;font-weight:700;cursor:pointer}
+.login-profile-tabs button.active{background:#7b2e2e;color:#fff;border-color:#7b2e2e;box-shadow:0 8px 18px rgba(123,46,46,.16)}
+body.perfil-operacao .sidebar{background:linear-gradient(180deg,#fff8ef,#fff3e1)}
+body.perfil-operacao .brand span::after{content:' • Operação';color:#2f7d32;font-weight:700}
+body.perfil-operacao .topbar .eyebrow::after{content:' • Perfil Operação';color:#2f7d32;font-weight:700}
+body.perfil-operacao .top-actions{display:none}
+@media(max-width:760px){body.perfil-operacao .sidebar{position:sticky;top:0;z-index:40;width:100%;height:auto;border-radius:0;padding:10px}body.perfil-operacao .app-shell{display:block}body.perfil-operacao .main{margin:0;padding:12px}body.perfil-operacao .nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}body.perfil-operacao .nav-group{display:contents}body.perfil-operacao .nav-group summary{display:none}body.perfil-operacao .nav button{width:100%;margin:0;padding:12px 8px;font-size:13px}.sidebar-card{display:none}}
+
+/* DonasOS 1.1.1 - Perfis: logout, menu mobile e cozinha com identidade */
+.logout-btn{border-color:rgba(123,35,50,.22)!important;color:#7b2332!important;font-weight:900!important}
+body.perfil-operacao .top-actions .upload,
+body.perfil-operacao .top-actions button[onclick="App.exportarBackup()"]{display:none!important}
+.mobile-op-nav{display:none}
+body.perfil-operacao .sidebar .nav button[hidden],
+body.perfil-operacao .sidebar .nav-group[hidden]{display:none!important}
+body.perfil-operacao #page-cozinha .home-hero{background:linear-gradient(135deg,#fff8ed,#f7dfc4);border:1px solid #e2c39a;box-shadow:0 18px 42px rgba(73,32,18,.10)}
+body.perfil-operacao #page-cozinha .home-hero h2{color:#5d1a27}
+body.perfil-operacao #page-cozinha .home-hero .eyebrow{color:#9b6b25}
+
+@media(max-width:640px){
+  body.admin-mode.perfil-operacao{background:#fff8ef}
+  body.admin-mode.perfil-operacao .app-shell{display:block;padding-bottom:86px}
+  body.admin-mode.perfil-operacao .sidebar{display:none!important}
+  body.admin-mode.perfil-operacao .topbar{display:flex!important;position:sticky;top:0;z-index:80;margin:0 0 12px;padding:12px 14px;border-radius:20px;background:rgba(255,253,248,.94);backdrop-filter:blur(10px);box-shadow:0 10px 28px rgba(73,32,18,.10)}
+  body.admin-mode.perfil-operacao .topbar .eyebrow{font-size:10px;margin:0;color:#9b6b25}
+  body.admin-mode.perfil-operacao .topbar h1{font-size:19px;margin:2px 0 0;color:#4a171f}
+  body.admin-mode.perfil-operacao .top-actions{display:flex;gap:6px}
+  body.admin-mode.perfil-operacao .logout-btn{display:inline-flex!important;padding:9px 11px;border-radius:14px;font-size:12px;background:#fff8ef!important}
+  body.admin-mode.perfil-operacao .main{margin:0;padding:10px 10px 92px;border-radius:0;min-height:100vh;background:linear-gradient(180deg,#fff8ef,#fffdf8)}
+  body.admin-mode.perfil-operacao .mobile-op-nav{display:grid;position:fixed;left:10px;right:10px;bottom:10px;z-index:999;grid-template-columns:repeat(5,1fr);gap:5px;padding:8px;border-radius:24px;background:rgba(74,23,31,.96);box-shadow:0 18px 44px rgba(37,13,16,.34);border:1px solid rgba(255,255,255,.16)}
+  body.admin-mode.perfil-operacao .mobile-op-nav button{border:0;background:transparent;color:#fff;border-radius:17px;padding:8px 4px;font-weight:900;font-size:18px;line-height:1;display:grid;gap:4px;place-items:center}
+  body.admin-mode.perfil-operacao .mobile-op-nav button span{font-size:10px;letter-spacing:-.02em}
+  body.admin-mode.perfil-operacao .mobile-op-nav button.active{background:#fff8ef;color:#6f1d2b}
+  body.admin-mode.perfil-operacao #page-cozinha .home-hero{border-radius:24px;padding:18px;margin-bottom:12px}
+  body.admin-mode.perfil-operacao #page-cozinha .home-hero h2{font-size:27px;line-height:1.05}
+  body.admin-mode.perfil-operacao #page-cozinha .home-hero p{font-size:13px}
+  body.admin-mode.perfil-operacao .kitchen-board{grid-template-columns:1fr!important;gap:12px}
+  body.admin-mode.perfil-operacao .kitchen-column{border-radius:22px;padding:10px;background:#fff8ef}
+  body.admin-mode.perfil-operacao .kitchen-column>header{position:sticky;top:74px;z-index:4;border-radius:18px;font-size:16px;box-shadow:0 8px 20px rgba(73,32,18,.08)}
+  body.admin-mode.perfil-operacao .kitchen-ticket{border-radius:22px;padding:16px;margin-bottom:12px;box-shadow:0 12px 28px rgba(73,32,18,.12)}
+  body.admin-mode.perfil-operacao .kitchen-ticket h3{font-size:24px;margin:6px 0;color:#4a171f}
+  body.admin-mode.perfil-operacao .kitchen-plate{border-radius:18px;padding:13px;background:#fffaf3}
+  body.admin-mode.perfil-operacao .kitchen-plate span{font-size:15px;color:#4e3b32;font-weight:800}
+  body.admin-mode.perfil-operacao .kitchen-actions button{flex:1;min-width:120px;padding:12px 10px;border-radius:16px;font-size:13px}
+  body.admin-mode.perfil-operacao .kanban{grid-template-columns:1fr!important}
+}
+
+/* DonasOS 1.1.2 - Ajuste final perfil Operação: mesma identidade visual e logout */
+body.perfil-operacao .sidebar{
+  background:linear-gradient(180deg,#3b171d 0%,#5d1a27 58%,#321418 100%)!important;
+  color:#fff!important;
+  border-right:1px solid rgba(255,255,255,.10)!important;
+  box-shadow:18px 0 42px rgba(45,18,12,.24)!important;
+}
+body.perfil-operacao .brand strong{color:#fff!important}
+body.perfil-operacao .brand span{color:#f0cf9e!important}
+body.perfil-operacao .nav-group{background:rgba(255,255,255,.045)!important;border-color:rgba(255,255,255,.12)!important}
+body.perfil-operacao .nav-group summary{color:#f3cf9d!important}
+body.perfil-operacao .nav-group button{background:rgba(255,255,255,.05)!important;color:#f5e8dd!important}
+body.perfil-operacao .nav-group button.active,
+body.perfil-operacao .nav-group button:hover{background:#fff!important;color:var(--wine)!important;border-color:#fff!important}
+body.perfil-operacao .top-actions{display:flex!important;gap:10px!important}
+body.perfil-operacao .top-actions .upload,
+body.perfil-operacao .top-actions button[onclick="App.exportarBackup()"]{display:none!important}
+body.perfil-operacao .logout-btn{display:inline-flex!important;align-items:center;justify-content:center}
+@media(max-width:760px){
+  body.perfil-operacao .top-actions{display:flex!important}
+}

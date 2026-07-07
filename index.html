@@ -23,7 +23,7 @@
     <aside class="sidebar">
       <div class="brand">
         <img class="brand-logo" src="assets/img/logo-donas-da-massa.png" alt="Logo Donas da Massa">
-        <div><strong>Donas da Massa</strong><span id="internalName">Donas OS 1.3.2</span></div>
+        <div><strong>Donas da Massa</strong><span id="internalName">Donas OS 1.1 Operação</span></div>
       </div>
       <nav class="nav nav-modular">
         <details class="nav-group" open>
@@ -59,6 +59,13 @@
         <span id="sideMode">Online • Supabase sincronizado</span>
       </div>
     </aside>
+    <div class="mobile-op-nav" id="mobileOpNav" aria-label="Menu rápido operação">
+      <button type="button" data-op-page="pedidos">🧾<span>Pedidos</span></button>
+      <button type="button" data-op-page="cozinha">👨‍🍳<span>Cozinha</span></button>
+      <button type="button" data-op-page="pdv">🍝<span>Pedido</span></button>
+      <button type="button" data-op-page="estoque">📦<span>Estoque</span></button>
+      <button type="button" data-op-page="online">🌐<span>Loja</span></button>
+    </div>
 
     <main class="main">
       <header class="topbar">
@@ -69,6 +76,7 @@
         <div class="top-actions">
           <button class="ghost" onclick="App.exportarBackup()">Exportar backup</button>
           <label class="ghost upload">Importar backup<input type="file" accept=".json" onchange="App.importarBackup(event)"></label>
+          <button class="ghost logout-btn" onclick="App.logoutAdmin()">Sair</button>
         </div>
       </header>
 
@@ -646,7 +654,7 @@
             <div class="field"><label>WhatsApp da loja</label><input id="cfgWhatsapp" placeholder="Ex: 16997062305"><small class="hint">Use apenas números com DDD. Esse número será usado no botão do Portal Cliente.</small></div>
             <div class="row"><div class="field"><label>Taxa entrega</label><input id="cfgTaxa" type="number" step="0.01"></div><div class="field"><label>Raio de entrega</label><input id="cfgRaioEntrega" placeholder="Ex: condomínio / 5 km"></div></div>
             <div class="row"><div class="field"><label>Tempo médio de preparo (min)</label><input id="cfgTempoPreparo" type="number" min="0" placeholder="Ex: 20"></div><div class="field"><label>Complementos grátis</label><input id="cfgGratis" type="number"></div></div>
-            <div class="row"><div class="field"><label>Proteínas grátis</label><input id="cfgProteinasGratis" type="number" min="0" placeholder="Ex: 1"></div><div class="field"><label>Finalizações grátis</label><input id="cfgFinalizacoesGratis" type="number" min="0" placeholder="Ex: 1"></div></div><div class="row"><div class="field"><label>Meta diária</label><input id="cfgMetaDiaria" type="number" step="0.01" placeholder="Ex: 1000"></div><div class="field"><label>Senha ADM</label><input id="cfgAdminSenha" type="password" placeholder="Padrão: donas2026"></div></div>
+            <div class="row"><div class="field"><label>Proteínas grátis</label><input id="cfgProteinasGratis" type="number" min="0" placeholder="Ex: 1"></div><div class="field"><label>Finalizações grátis</label><input id="cfgFinalizacoesGratis" type="number" min="0" placeholder="Ex: 1"></div></div><div class="row"><div class="field"><label>Meta diária</label><input id="cfgMetaDiaria" type="number" step="0.01" placeholder="Ex: 1000"></div><div class="field"><label>Senha ADM</label><input id="cfgAdminSenha" type="password" placeholder="Padrão: donas2026"></div></div><div class="row"><div class="field"><label>Senha Operação</label><input id="cfgOperacaoSenha" type="password" placeholder="Padrão: massa2026"><small class="hint">Perfil para uso na cozinha: Pedidos, Cozinha, Fazer Pedido, Estoque e Online Ready.</small></div><div class="field"><label>Perfil Operação</label><input value="Pedidos • Cozinha • Fazer Pedido • Estoque • Online Ready" readonly></div></div>
             <div class="field"><label>Nome interno do sistema</label><input id="cfgNomeInterno" placeholder="Donas OS"></div>
             <label class="check-line"><input id="cfgModoOperacao" type="checkbox"> Iniciar em modo operação</label>
             <button class="primary full" onclick="App.salvarConfig()">Salvar configurações</button>
