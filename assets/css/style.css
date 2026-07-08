@@ -419,3 +419,22 @@ body.perfil-operacao .logout-btn{display:inline-flex!important;align-items:cente
 @media(max-width:760px){
   body.perfil-operacao .top-actions{display:flex!important}
 }
+
+
+/* v1.1.4 - Operação simplificada */
+.availability-line{background:#fff8ef;border:1px dashed #d6b892;border-radius:14px;padding:10px 12px;margin:6px 0 12px}
+.pill.green{background:#e6eddc!important;color:#2f6b2f!important}.pill.red{background:#f4dddd!important;color:#a33!important}
+body.perfil-operacao #page-cozinha .kitchen-ticket{border-color:#d7b58f}
+@media(max-width:640px){
+  body.admin-mode.perfil-operacao #page-cozinha .kitchen-ticket h3{font-size:26px}
+  body.admin-mode.perfil-operacao #page-cozinha .status-pill{font-size:13px;padding:6px 10px}
+  body.admin-mode.perfil-operacao #page-cozinha .origin-pill{font-size:12px;padding:5px 9px}
+  body.admin-mode.perfil-operacao #page-cozinha .kitchen-actions{display:grid;grid-template-columns:1fr;gap:8px}
+  body.admin-mode.perfil-operacao #page-cozinha .kitchen-actions button{width:100%;min-width:0;font-size:15px;padding:14px 10px}
+}
+
+/* Ajuste operação: separa múltiplos pratos dentro da mesma OS */
+.pedido-prato{margin:8px 0 6px;padding:8px;border:1px solid rgba(122,36,47,.12);border-radius:12px;background:rgba(255,248,239,.72)}
+.pedido-prato>strong{display:block;margin-bottom:6px;color:#7a242f;font-size:.9rem}
+/* v1.1.7 - organização visual de pratos do mesmo pedido */
+.plate-section{margin:8px 0 10px}.plate-section small{display:block;text-transform:uppercase;letter-spacing:.05em;font-size:10px;font-weight:900;color:#9a6a36;margin-bottom:4px}.kitchen-plate .pedido-prato{border:0;background:transparent;padding:0;margin:0}.kitchen-plate .plate-section{margin:7px 0}.kitchen-plate .plate-section small{font-size:10px;color:#9a6a36}.kitchen-plate .pedido-itens{margin:3px 0 0}.kitchen-plate .pedido-itens span{font-size:13px;font-weight:800;color:#4e3b32;background:#f2e3d1;border-radius:999px;padding:4px 8px}.pedido-card .pedido-prato{border-style:dashed;background:#fffaf3}.pedido-card .pedido-prato>strong{font-size:14px;color:#7a242f}

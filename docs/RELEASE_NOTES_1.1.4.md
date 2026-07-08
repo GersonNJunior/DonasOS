@@ -1,7 +1,13 @@
-# Donas OS 1.1.4 - Correção clientes oficiais no ADM
+# DonasOS 1.1.4 - Operação Simplificada
 
-- Corrige carregamento de clientes oficiais do Supabase na tela Clientes.
-- Mantém clientes pendentes separados para aprovação do administrador.
-- Cliente antigo continua identificado por telefone e não sofre alteração automática pelo pedido online.
-- Alterações de cadastro oficial passam a ser feitas apenas pelo ADM e sincronizadas com o Supabase.
-- Não exige SQL novo se o SQL da versão 1.1.2 já foi executado com sucesso.
+## Ajustes
+
+- Massas e bebidas continuam usando estoque numérico.
+- Ingredientes de molho, proteína, complemento e finalização passam a funcionar como Disponível/Indisponível no cardápio.
+- Pedidos não baixam mais gramas/ml dos ingredientes opcionais, evitando bloqueio por diferença de porção real.
+- Tela Estoque ganhou botão rápido para ativar/desativar disponibilidade do item.
+- Cozinha mobile recebeu ajustes de botões e leitura para uso no celular.
+
+## Observação
+
+Compras e Produção permanecem no sistema para consulta/uso futuro, mas a operação diária pode ser feita pelo Financeiro + Estoque simplificado.
