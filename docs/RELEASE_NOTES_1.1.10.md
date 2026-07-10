@@ -1,13 +1,9 @@
-# Donas OS 1.1.10
+# DonasOS 1.1.10 — Fluxo de reservas e edição segura
 
-Correção crítica na validação de estoque ao concluir pedidos.
-
-## Ajustes
-
-- Pedido agora encontra o item correto mesmo quando o estoque veio do Supabase.
-- Baixa/devolução de estoque usa identificação robusta.
-- Validação soma o uso total do mesmo item antes de concluir o pedido.
-
-## SQL
-
-Não precisa rodar SQL novo.
+- Reservas ficam somente na aba Reservados até o botão **Iniciar pedido** ser acionado.
+- A aba Reservados está liberada para os perfis Administrador e Operação/Produção.
+- Ao iniciar uma reserva, ela entra na aba Pedidos como **Pedido Feito**.
+- A edição de itens mantém o pedido visível e na mesma posição da fila.
+- O editor carrega todos os pratos e ingredientes existentes, permitindo trocar itens ou adicionar novos pratos.
+- Cancelar a edição mantém o pedido original sem alterações.
+- O estoque é recalculado apenas ao salvar a edição, evitando zerar ou duplicar o pedido.

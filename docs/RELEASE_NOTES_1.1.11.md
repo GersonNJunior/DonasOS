@@ -1,4 +1,4 @@
-# Donas OS 1.1.11 - Correção Último Pedido no Portal
+# Donas OS 1.1.12 - Correção Último Pedido no Portal
 
 ## Correção
 - Corrige carregamento do último pedido no carrinho do portal.

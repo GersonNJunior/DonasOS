@@ -1,1 +1,1 @@
-DonasOS 1.1.24 - Correcoes dos ajustes operacionais, portal, producao, cupons, insights e horarios.
+DonasOS 1.1.12 - Edição individual de pratos em pedidos com múltiplos pratos.

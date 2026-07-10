@@ -438,3 +438,15 @@ body.perfil-operacao #page-cozinha .kitchen-ticket{border-color:#d7b58f}
 .pedido-prato>strong{display:block;margin-bottom:6px;color:#7a242f;font-size:.9rem}
 /* v1.1.7 - organização visual de pratos do mesmo pedido */
 .plate-section{margin:8px 0 10px}.plate-section small{display:block;text-transform:uppercase;letter-spacing:.05em;font-size:10px;font-weight:900;color:#9a6a36;margin-bottom:4px}.kitchen-plate .pedido-prato{border:0;background:transparent;padding:0;margin:0}.kitchen-plate .plate-section{margin:7px 0}.kitchen-plate .plate-section small{font-size:10px;color:#9a6a36}.kitchen-plate .pedido-itens{margin:3px 0 0}.kitchen-plate .pedido-itens span{font-size:13px;font-weight:800;color:#4e3b32;background:#f2e3d1;border-radius:999px;padding:4px 8px}.pedido-card .pedido-prato{border-style:dashed;background:#fffaf3}.pedido-card .pedido-prato>strong{font-size:14px;color:#7a242f}
+
+/* Reservas 1.1.9 */
+.reservation-fields{padding:14px;border:1px dashed rgba(123,46,46,.25);border-radius:16px;background:#fffaf4;margin-bottom:12px}
+.reservation-pill{display:inline-flex;margin:0 0 10px;background:#fff0d9;color:#7b3e12;border:1px solid #f0d2a8}
+.reservations-board{display:grid;gap:18px}
+.reservation-day{background:#fff;border:1px solid rgba(123,46,46,.14);border-radius:22px;overflow:hidden;box-shadow:0 10px 30px rgba(80,40,20,.06)}
+.reservation-day>header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;background:#fff8ef;border-bottom:1px solid rgba(123,46,46,.12)}
+.reservation-day>header h3{margin:3px 0 0;text-transform:capitalize}.reservation-day>header span{min-width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#7b2e2e;color:#fff;font-weight:800}
+.reservation-list{padding:14px;display:grid;gap:12px}.reservation-card{display:grid;grid-template-columns:76px 1fr;gap:12px;align-items:start}.reservation-time{font-size:20px;font-weight:900;text-align:center;padding:14px 6px;border-radius:16px;background:#eef7ec;color:#24602d;border:1px solid #cfe5cd}.reservation-card .pedido-card{margin:0}
+@media(max-width:700px){.reservation-card{grid-template-columns:1fr}.reservation-time{text-align:left;padding:10px 14px}}
+
+.plate-chip{cursor:pointer}.plate-chip:hover{border-color:#9f6f42;box-shadow:0 2px 8px rgba(74,24,34,.10)}.plate-chip.editing-plate{outline:3px solid rgba(31,122,73,.22);border-color:var(--green);background:#f3fbf6}.editing-plate-label{font-weight:900;color:var(--green);padding:8px 10px;margin:-2px -2px 8px;border-radius:12px;background:#edf8f1}
