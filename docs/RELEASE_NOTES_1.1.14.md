@@ -1,7 +1,8 @@
-# Donas OS 1.1.14
+# DonasOS 1.1.14 — Taxas de cartão
 
-- Migra registros de compras para o Supabase.
-- Carrega compras em outros navegadores/dispositivos.
-- Mantém vínculo da compra com item de estoque quando informado.
-- Mantém entrada de estoque sincronizada com Supabase.
-- Permite editar e remover compras no banco.
+- Adicionadas as opções Débito (aproximação) e Crédito (aproximação) ao registro de pagamento na aba Pedidos.
+- Débito desconta automaticamente 1,39%.
+- Crédito desconta automaticamente 3,79%.
+- O modal mostra valor bruto, taxa e saldo líquido antes da confirmação.
+- O Financeiro recebe apenas o valor líquido; faturamento do pedido continua representando o total cobrado do cliente.
+- PIX e Dinheiro continuam sem desconto.
