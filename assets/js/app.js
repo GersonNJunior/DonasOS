@@ -86,14 +86,14 @@ const App=(()=>{
   function statusClass(st){return 'status-'+String(st||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')}
 
   function item(nome,categoria,preco,custo,estoque,minimo,unidade,icone,imagem='',porcao=1){return{id:uid(),nome,categoria,preco,custo,estoque,minimo,unidade,icone,imagem,porcao,obs:'',ativo:true}}
-  function seed(){return{version:'1.2.0-operacao',config:{nome:'Donas da Massa',nomeInterno:'Donas OS',slogan:'Seu macarrão. Seu jeito.',cnpj:'',email:'',enderecoEmpresa:'',instagram:'',pix:'',whatsapp:'',taxaEntrega:0,raioEntrega:'',tempoPreparo:20,complementosGratis:2,proteinasGratis:1,finalizacoesGratis:1,metaDiaria:1000,modoOperacao:false,adminSenha:'donas2026',operacaoSenha:'massa2026'},itens:[
+  function seed(){return{version:'1.2.0-operacao',config:{nome:'Donas da Massa',nomeInterno:'Donas OS',slogan:'Seu macarrão. Seu jeito.',cnpj:'',email:'',enderecoEmpresa:'',instagram:'',pix:'',whatsapp:'',taxaEntrega:0,raioEntrega:'',tempoPreparo:20,complementosGratis:2,proteinasGratis:1,finalizacoesGratis:1,metaDiaria:1000,modoOperacao:false,pratosFeitosAtivo:true,adminSenha:'donas2026',operacaoSenha:'massa2026'},itens:[
     item('Penne','Massa',18,6,30,5,'un','🍝'),item('Caracolino','Massa',18,6,30,5,'un','🍝'),item('Espaguete','Massa',18,6,30,5,'un','🍝'),
     item('Tradicional','Molho',7,2.5,20,4,'un','🍅'),item('Branco','Molho',7,2.8,20,4,'un','🥛'),
     item('Bacon','Proteína',8,3.5,2000,300,'g','🥓','',100),item('Frango','Proteína',8,3,2000,300,'g','🍗','',100),item('Calabresa','Proteína',8,3.2,2000,300,'g','', 'assets/img/ingredientes/calabresa.png',100),item('Carne Moída','Proteína',8,3.5,2000,300,'g','🥩','',100),
     item('Milho','Complemento',3,1,3000,500,'g','🌽','',80),item('Azeitona','Complemento',3,1,2000,300,'g','🫒','',50),item('Mussarela','Complemento',4,1.8,3000,500,'g','🧀','',80),item('Cebola','Complemento',3,.8,2000,300,'g','🧅','',50),
     item('Cebolinha','Finalização',0,.3,1000,200,'g','🌿','',20),item('Parmesão','Finalização',4,1.6,1500,250,'g','🧀','',30),
-    item('Coca-Cola 350ml','Bebida',6,3,15,5,'un','🥤'),item('Água','Bebida',3,1,15,5,'un','💧')],pedidos:[],clientes:[],clientesPendentes:[],financeiro:[],marketing:[],favoritos:[],compras:[],receitas:[],producoes:[],cupons:[]}}
-  function migrate(x){const base=seed();x.version='1.0.0-rc-inauguracao';x.config={...base.config,...(x.config||{})}; if(x.config.whatsapp===undefined)x.config.whatsapp='';if(x.config.finalizacoesGratis===undefined)x.config.finalizacoesGratis=1;if(x.config.adminSenha===undefined)x.config.adminSenha='donas2026';if(x.config.operacaoSenha===undefined)x.config.operacaoSenha='massa2026';x.itens=(x.itens||base.itens).map(i=>{let icon=i.icone||iconeCat(i.categoria);if((i.nome||'').toLowerCase().includes('calabresa')&&icon==='🌭')icon='🍖';return{...i,unidade:i.unidade||'un',porcao:Number(i.porcao||1),porcaoUnidade:i.porcaoUnidade||i.porcao_unidade||i.unidade||'un',icone:icon,imagem:(i.imagem||(((i.nome||'').toLowerCase().includes('calabresa'))?'assets/img/ingredientes/calabresa.png':'')),ativo:i.ativo!==false,obs:i.obs||''}});x.pedidos=(x.pedidos||[]).map(p=>{const st=(p.status==='Concluído')?'Entregue':(p.status||'Entregue');let itens=(p.itens||[]).map(i=>({...i,qtdUsada:Number(i.qtdUsada||i.qtd||i.quantidadeUsada||1),porcao:Number(i.porcao||1)}));const rv=extrairReserva(p.obs||'');return{...p,itens,atendimento:p.atendimento||rv.atendimento,reservaData:p.reservaData||rv.reservaData,reservaHorario:p.reservaHorario||rv.reservaHorario,reservaIniciada:p.reservaIniciada??rv.reservaIniciada??!((p.atendimento||rv.atendimento)==='reserva'&&st==='Pedido Feito'),obs:p.atendimento?p.obs:rv.obs,pratos:p.pratos||[{nome:'Prato 1',itens}],status:st,financeiroLancado:p.financeiroLancado??p.pagamentoRecebido??((x.financeiro||[]).some(m=>m.origem==='pedido'&&m.pedidoId===p.id)),pagamentoRecebido:p.pagamentoRecebido??p.financeiroLancado??false,dataPagamento:p.dataPagamento||'',pagamento:p.pagamento||'',pagamentoPrevisto:p.pagamentoPrevisto||p.pagamento||'PIX'}});x.clientes=x.clientes||[];x.clientesPendentes=x.clientesPendentes||[];x.clientes=x.clientes.map(c=>({...c,cep:c.cep||'',rua:c.rua||'',numero:c.numero||'',complemento:c.complemento||'',bairro:c.bairro||'',cidade:c.cidade||'',uf:c.uf||'',endereco:c.endereco||enderecoCompleto(c)}));x.clientesPendentes=x.clientesPendentes.map(c=>({...c,status:c.status||'pendente',cep:c.cep||'',rua:c.rua||'',numero:c.numero||'',complemento:c.complemento||'',bairro:c.bairro||'',cidade:c.cidade||'',uf:c.uf||'',endereco:c.endereco||enderecoCompleto(c)}));x.financeiro=x.financeiro||[];x.marketing=(x.marketing||[]).map(m=>({
+    item('Coca-Cola 350ml','Bebida',6,3,15,5,'un','🥤'),item('Água','Bebida',3,1,15,5,'un','💧')],pedidos:[],clientes:[],clientesPendentes:[],financeiro:[],marketing:[],favoritos:[],compras:[],receitas:[],producoes:[],cupons:[],pratosFeitos:[]}}
+  function migrate(x){const base=seed();x.version='1.0.0-rc-inauguracao';x.config={...base.config,...(x.config||{})}; if(x.config.whatsapp===undefined)x.config.whatsapp='';if(x.config.pratosFeitosAtivo===undefined)x.config.pratosFeitosAtivo=true;if(x.config.finalizacoesGratis===undefined)x.config.finalizacoesGratis=1;if(x.config.adminSenha===undefined)x.config.adminSenha='donas2026';if(x.config.operacaoSenha===undefined)x.config.operacaoSenha='massa2026';x.itens=(x.itens||base.itens).map(i=>{let icon=i.icone||iconeCat(i.categoria);if((i.nome||'').toLowerCase().includes('calabresa')&&icon==='🌭')icon='🍖';return{...i,unidade:i.unidade||'un',porcao:Number(i.porcao||1),porcaoUnidade:i.porcaoUnidade||i.porcao_unidade||i.unidade||'un',icone:icon,imagem:(i.imagem||(((i.nome||'').toLowerCase().includes('calabresa'))?'assets/img/ingredientes/calabresa.png':'')),ativo:i.ativo!==false,obs:i.obs||''}});x.pedidos=(x.pedidos||[]).map(p=>{const st=(p.status==='Concluído')?'Entregue':(p.status||'Entregue');let itens=(p.itens||[]).map(i=>({...i,qtdUsada:Number(i.qtdUsada||i.qtd||i.quantidadeUsada||1),porcao:Number(i.porcao||1)}));const rv=extrairReserva(p.obs||'');return{...p,itens,atendimento:p.atendimento||rv.atendimento,reservaData:p.reservaData||rv.reservaData,reservaHorario:p.reservaHorario||rv.reservaHorario,reservaIniciada:p.reservaIniciada??rv.reservaIniciada??!((p.atendimento||rv.atendimento)==='reserva'&&st==='Pedido Feito'),obs:p.atendimento?p.obs:rv.obs,pratos:p.pratos||[{nome:'Prato 1',itens}],status:st,financeiroLancado:p.financeiroLancado??p.pagamentoRecebido??((x.financeiro||[]).some(m=>m.origem==='pedido'&&m.pedidoId===p.id)),pagamentoRecebido:p.pagamentoRecebido??p.financeiroLancado??false,dataPagamento:p.dataPagamento||'',pagamento:p.pagamento||'',pagamentoPrevisto:p.pagamentoPrevisto||p.pagamento||'PIX'}});x.clientes=x.clientes||[];x.clientesPendentes=x.clientesPendentes||[];x.clientes=x.clientes.map(c=>({...c,cep:c.cep||'',rua:c.rua||'',numero:c.numero||'',complemento:c.complemento||'',bairro:c.bairro||'',cidade:c.cidade||'',uf:c.uf||'',endereco:c.endereco||enderecoCompleto(c)}));x.clientesPendentes=x.clientesPendentes.map(c=>({...c,status:c.status||'pendente',cep:c.cep||'',rua:c.rua||'',numero:c.numero||'',complemento:c.complemento||'',bairro:c.bairro||'',cidade:c.cidade||'',uf:c.uf||'',endereco:c.endereco||enderecoCompleto(c)}));x.financeiro=x.financeiro||[];x.marketing=(x.marketing||[]).map(m=>({
       ...m,
       ativo:m.ativo!==false,
       exibirInterno:m.exibirInterno!==false,
@@ -104,7 +104,7 @@ const App=(()=>{
       botao:m.botao||'',
       modoBanner:m.modoBanner||'informativo',
       alturaBanner:m.alturaBanner||260
-    }));x.favoritos=x.favoritos||[];x.compras=x.compras||[];x.receitas=x.receitas||[];x.producoes=x.producoes||[];x.cupons=x.cupons||[];x.mural=x.mural||[];x.fechamentos=x.fechamentos||[];x.logs=x.logs||[];
+    }));x.favoritos=x.favoritos||[];x.compras=x.compras||[];x.receitas=x.receitas||[];x.producoes=x.producoes||[];x.cupons=x.cupons||[];x.pratosFeitos=x.pratosFeitos||[];x.mural=x.mural||[];x.fechamentos=x.fechamentos||[];x.logs=x.logs||[];
     x.sync={modo:'online',status:'supabase beta',fila:[],lastSync:'',supabaseUrl:SUPABASE_DEFAULT_URL,supabaseAnonKey:SUPABASE_DEFAULT_KEY,lojaAberta:false,horarioModo:'manual',horarios:{dom:{ativo:false,inicio:'18:00',fim:'22:00',inicio2:'',fim2:''},seg:{ativo:false,inicio:'18:00',fim:'22:00',inicio2:'',fim2:''},ter:{ativo:false,inicio:'18:00',fim:'22:00',inicio2:'',fim2:''},qua:{ativo:false,inicio:'18:00',fim:'22:00',inicio2:'',fim2:''},qui:{ativo:false,inicio:'18:00',fim:'22:00',inicio2:'',fim2:''},sex:{ativo:true,inicio:'18:00',fim:'23:00',inicio2:'',fim2:''},sab:{ativo:true,inicio:'18:00',fim:'23:00',inicio2:'',fim2:''}},...(x.sync||{})};x.sync.horarios={dom:{ativo:false,inicio:'18:00',fim:'22:00',inicio2:'',fim2:''},seg:{ativo:false,inicio:'18:00',fim:'22:00',inicio2:'',fim2:''},ter:{ativo:false,inicio:'18:00',fim:'22:00',inicio2:'',fim2:''},qua:{ativo:false,inicio:'18:00',fim:'22:00',inicio2:'',fim2:''},qui:{ativo:false,inicio:'18:00',fim:'22:00',inicio2:'',fim2:''},sex:{ativo:true,inicio:'18:00',fim:'23:00',inicio2:'',fim2:''},sab:{ativo:true,inicio:'18:00',fim:'23:00',inicio2:'',fim2:''},...(x.sync.horarios||{})};
     x.itens=x.itens.map(i=>({...i,onlineId:i.onlineId||onlineId('ITEM'),updatedAt:i.updatedAt||new Date().toISOString(),syncStatus:i.syncStatus||'local'}));
     x.clientes=x.clientes.map(c=>({...c,onlineId:c.onlineId||onlineId('CLI'),updatedAt:c.updatedAt||new Date().toISOString(),syncStatus:c.syncStatus||'local'}));
@@ -120,7 +120,14 @@ const App=(()=>{
   let portalPedido={itens:{},qtd:{}};
   let portalPratos=[];
   let portalClienteIdentificado=null;
+  let portalBuscaTelefoneTimer=null;
   let portalAvisoFechadoDispensado=false;
+  let portalModo='montar';
+  let pratoFeitoAdminEmEdicao=null;
+  let pratoFeitoPortalAtual=null;
+  let pratoFeitoSelecao={};
+  let pratoFeitoImagemTemp='';
+  let pratoFeitoConfirmacoesIgnoradas=new Set();
   let cupomEditandoId=null;
   let assistentePorcoesEditing=false;
   let assistentePorcoesSaving=false;
@@ -133,7 +140,7 @@ const App=(()=>{
   function isPublicClient(){try{const q=new URLSearchParams(location.search);return document.body.classList.contains('public-client')||(!q.has('admin')&&!String(location.hash||'').includes('admin'));}catch(e){return document.body.classList.contains('public-client')}}
   function perfilAtual(){return sessionStorage.getItem(ADMIN_ROLE_KEY)||'admin'}
   function paginaPermitidaOperacao(id){return OPERACAO_PAGES.includes(id)}
-  function page(id){if(isPublicClient())id='portal';if(!isPublicClient()&&perfilAtual()==='operacao'&&!paginaPermitidaOperacao(id)){toast('Acesso restrito ao perfil Operação.');id='pedidos';}document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));el('page-'+id)?.classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));document.querySelectorAll('.mobile-op-nav button').forEach(b=>b.classList.toggle('active',b.dataset.opPage===id));const activeBtn=document.querySelector(`.nav button[data-page="${id}"]`);if(activeBtn){const parent=activeBtn.closest('details');if(parent)parent.open=true;}try{localStorage.setItem(KEY+'_last_page',id)}catch(e){}el('pageTitle').textContent={pdv:'Montar Pedido',dashboard:'Início',operacao:'Operação',insights:'Insights',relatorios:'Relatórios',marketing:'Campanhas',cupons:'Cupons',pedidos:'Pedidos',reservados:'Reservados',estoque:'Estoque',compras:'Compras',producao:'Produção',clientes:'Clientes',financeiro:'Financeiro',config:'Configurações',online:'Online Ready',portal:'Donas Online',cozinha:'Cozinha'}[id]||id;if(id==='insights'&&!isPublicClient())atualizarInsightsSupabase();const main=document.querySelector('.main');if(main)main.scrollTop=0;window.scrollTo({top:0,left:0,behavior:'auto'});const pg=el('page-'+id);if(pg)pg.scrollTop=0}
+  function page(id){if(isPublicClient())id='portal';if(!isPublicClient()&&perfilAtual()==='operacao'&&!paginaPermitidaOperacao(id)){toast('Acesso restrito ao perfil Operação.');id='pedidos';}document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));el('page-'+id)?.classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));document.querySelectorAll('.mobile-op-nav button').forEach(b=>b.classList.toggle('active',b.dataset.opPage===id));const activeBtn=document.querySelector(`.nav button[data-page="${id}"]`);if(activeBtn){const parent=activeBtn.closest('details');if(parent)parent.open=true;}try{localStorage.setItem(KEY+'_last_page',id)}catch(e){}el('pageTitle').textContent={pdv:'Montar Pedido',dashboard:'Início',operacao:'Operação',insights:'Insights',relatorios:'Relatórios',marketing:'Campanhas',cupons:'Cupons',pedidos:'Pedidos',reservados:'Reservados',estoque:'Estoque',compras:'Compras',producao:'Pratos Feitos',clientes:'Clientes',financeiro:'Financeiro',config:'Configurações',online:'Online Ready',portal:'Donas Online',cozinha:'Cozinha'}[id]||id;if(id==='insights'&&!isPublicClient())atualizarInsightsSupabase();const main=document.querySelector('.main');if(main)main.scrollTop=0;window.scrollTo({top:0,left:0,behavior:'auto'});const pg=el('page-'+id);if(pg)pg.scrollTop=0}
   function syncPedido(){pedido.cliente=val('clientePedido');pedido.telefone=val('telefonePedido');pedido.tipo=val('tipoPedido')||'Balcão';pedido.atendimento=val('atendimentoPedido')||'imediato';pedido.reservaData=val('reservaDataPedido');pedido.reservaHorario=val('reservaHorarioPedido');pedido.pagamentoPrevisto=val('pagamentoPedido')||'PIX';pedido.pagamentoRecebido=val('pagamentoRecebidoPedido')==='sim';pedido.obs=val('obsPedido');pedido.cupom=val('cupomPedido').trim().toUpperCase();pedido.cep=val('pedidoCep');pedido.rua=val('pedidoRua');pedido.numero=val('pedidoNumeroEndereco');pedido.complemento=val('pedidoComplemento');pedido.bairro=val('pedidoBairro')||val('bairroPedido');pedido.cidade=val('pedidoCidade');pedido.uf=val('pedidoUf');pedido.endereco=enderecoCompleto(pedido)||val('enderecoPedido')}
   function isSelected(item){const v=pedido.itens[item.categoria];return Array.isArray(v)?v.includes(item.id):v===item.id}
   function unidadeInteira(item){return ['un','cx'].includes(String(item.unidade||'un').toLowerCase())}
@@ -483,9 +490,35 @@ const App=(()=>{
     return ordem.filter(cat=>grupos[cat]?.length).map(cat=>({cat,itens:grupos[cat]}));
   }
   function renderPratoOperacional(pr,idx,compact=false){
-    const grupos=itensPorCategoriaDoPrato(pr);
-    const body=grupos.map(g=>`<div class="plate-section"><small>${g.cat}</small><div class="pedido-itens">${g.itens.map(i=>`<span>${labelItemCliente(i)}</span>`).join('')}</div></div>`).join('');
-    return `<div class="pedido-prato"><strong>🍝 Pedido ${idx+1}</strong>${body||'<small class="muted">Sem itens</small>'}</div>`;
+    const itens=pr.itens||[];
+    const comboDefinido=Array.isArray(pr.unidadesCombo)&&pr.unidadesCombo.length>1;
+    const temMarcacaoCombo=itens.some(i=>Number(i.unidadeCombo||0)>0);
+    let body='';
+    if(comboDefinido||temMarcacaoCombo){
+      let unidades=[];
+      if(comboDefinido){
+        unidades=pr.unidadesCombo.map((u,uIdx)=>({
+          nome:u.nome||`Prato ${uIdx+1}`,
+          itens:(u.itens&&u.itens.length)?u.itens:itens.filter(i=>Number(i.unidadeCombo||0)===uIdx+1)
+        }));
+      }else{
+        const mapa={};
+        itens.forEach(i=>{const n=Number(i.unidadeCombo||1);mapa[n]=mapa[n]||{nome:i.unidadeComboNome||`Prato ${n}`,itens:[]};mapa[n].itens.push(i)});
+        unidades=Object.keys(mapa).sort((a,b)=>Number(a)-Number(b)).map(k=>mapa[k]);
+      }
+      body=unidades.map((u,uIdx)=>{
+        const grupos=itensPorCategoriaDoPrato({itens:u.itens||[]});
+        const conteudo=grupos.map(g=>`<div class="plate-section"><small>${g.cat}</small><div class="pedido-itens">${g.itens.map(i=>`<span>${labelItemCliente(i)}</span>`).join('')}</div></div>`).join('');
+        return `${uIdx>0?'<hr class="combo-divider">':''}<div class="combo-order-unit"><div class="combo-unit-title">• Prato ${uIdx+1}${u.nome&&!/^Prato\s*\d+$/i.test(u.nome)?` — ${escapeHtmlPrato(u.nome)}`:''}</div>${conteudo||'<small class="muted">Sem itens</small>'}</div>`;
+      }).join('');
+    }else{
+      const grupos=itensPorCategoriaDoPrato(pr);
+      body=grupos.map(g=>`<div class="plate-section"><small>${g.cat}</small><div class="pedido-itens">${g.itens.map(i=>`<span>${labelItemCliente(i)}</span>`).join('')}</div></div>`).join('');
+    }
+    const titulo=(pr.nome && !/^Prato\s*\d+$/i.test(pr.nome))
+      ? escapeHtmlPrato(pr.nome)
+      : `Pedido ${idx+1}`;
+    return `<div class="pedido-prato"><strong>🍝 ${titulo}</strong>${body||'<small class="muted">Sem itens</small>'}</div>`;
   }
   function pedidoPratos(p){
     return pratosDoPedido(p).map((pr,idx)=>renderPratoOperacional(pr,idx)).join('');
@@ -736,7 +769,96 @@ const App=(()=>{
     const qtdProduzida=qtd*Number(r.rendimento||1);let custo=0;for(const ins of r.insumos||[]){const item=db.itens.find(i=>i.id===ins.itemId);const usado=Number(ins.qtd||0)*fator;if(!item)return toast('Um insumo da ficha não existe mais');if(Number(item.estoque||0)<usado)return toast(`Estoque insuficiente: ${item.nome} (precisa ${usado.toFixed(2)} ${item.unidade||'un'})`);}
     for(const ins of r.insumos||[]){const item=db.itens.find(i=>i.id===ins.itemId);const usado=Number(ins.qtd||0)*fator;item.estoque=Number(item.estoque||0)-usado;custo+=Number(item.custo||0)*usado;}
     const prod=db.itens.find(i=>i.id===r.produtoId);if(!prod)return toast('Produto produzido não existe mais');prod.estoque=Number(prod.estoque||0)+qtdProduzida;if(qtdProduzida>0)prod.custo=Math.round((custo/qtdProduzida)*100)/100;const producao={id:uid(),onlineId:onlineId('PROD'),receitaId,produtoId:r.produtoId,qtd:qtdProduzida,receitas:qtd,unidade:r.unidade,custo,data:new Date().toISOString(),status:'finalizado',insumos:(r.insumos||[]).map(ins=>({...ins,qtdUsada:Number(ins.qtd||0)*fator}))};db.producoes=db.producoes||[];db.producoes.unshift(producao);log('Produção registrada',`${prod.nome} • ${qtd} receita(s) = ${qtdProduzida} ${r.unidade}`);el('producaoQtd').value='';save();await supabaseSalvarProducao(producao);await supabaseSincronizarItensLocais();toast('Produção registrada')}
-  function renderProducao(){renderReceitaTemp();const lr=el('listaReceitas'),lp=el('listaProducoes'),pv=el('previewProducao');if(!lr)return;lr.innerHTML=(db.receitas||[]).map(r=>{const prod=db.itens.find(i=>i.id===r.produtoId);const custo=(r.insumos||[]).reduce((a,ins)=>{const item=db.itens.find(i=>i.id===ins.itemId);return a+(item?Number(item.custo||0)*Number(ins.qtd||0):0)},0);return `<div class="list-item"><div style="flex:1"><strong>${prod?prod.nome:'Produto removido'}</strong><br><small>Rende ${r.rendimento} ${r.unidade} • custo estimado ${fmt(custo)}</small><br><small>${(r.insumos||[]).map(ins=>{const it=db.itens.find(i=>i.id===ins.itemId);return `${it?it.nome:'Item removido'} ${ins.qtd} ${it?it.unidade||'un':''}`}).join(' • ')}</small></div><div class="list-actions"><button class="mini secondary" onclick="App.editarReceita('${r.id}')">editar</button><button class="mini danger-btn" onclick="App.removerReceita('${r.id}')">remover</button></div></div>`}).join('')||'<p class="muted">Nenhuma ficha técnica cadastrada.</p>';
+  function pratoFeitoCategoriasBase(){return ['Massa','Molho','Proteína','Complemento','Finalização','Bebida'];}
+  function carregarImagemPratoFeito(e){
+    const file=e.target.files?.[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        const maxW=1200,maxH=800,scale=Math.min(1,maxW/img.width,maxH/img.height);
+        const w=Math.max(1,Math.round(img.width*scale)),h=Math.max(1,Math.round(img.height*scale));
+        const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+        const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,w,h);
+        const tipo=file.type==='image/png'?'image/png':'image/jpeg';
+        pratoFeitoImagemTemp=canvas.toDataURL(tipo,tipo==='image/jpeg'?0.88:undefined);
+        if(el('pratoFeitoImagem'))el('pratoFeitoImagem').value=pratoFeitoImagemTemp;
+        renderPratoFeitoImagemPreview();
+      };
+      img.onerror=()=>toast('Não foi possível carregar esta imagem.');
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+  function renderPratoFeitoImagemPreview(){const box=el('pratoFeitoImagemPreview');if(!box)return;const src=val('pratoFeitoImagem')||pratoFeitoImagemTemp;box.innerHTML=src?`<img src="${src}" alt="Prévia do prato">`:'Nenhuma imagem selecionada.';}
+  function normalizarUnidadesPratoFeito(pf){
+    if(Array.isArray(pf?.unidades)&&pf.unidades.length)return pf.unidades.map((u,idx)=>({nome:u.nome||`Prato ${idx+1}`,modo:u.modo||pf.modo||'fixo',regras:u.regras||{}}));
+    return [{nome:'Prato 1',modo:pf?.modo||'fixo',regras:pf?.regras||{}}];
+  }
+  function capturarRascunhoPratoFeito(){
+    const box=el('pratoFeitoCategorias');if(!box||!box.dataset.ready)return pratoFeitoAdminEmEdicao||{};
+    const quantidade=Math.max(1,Number(val('pratoFeitoQuantidade')||1));
+    const unidades=[];
+    for(let idx=0;idx<quantidade;idx++){
+      const modo=document.querySelector(`[data-pf-modo-unidade="${idx}"]`)?.value||'fixo';
+      unidades.push({nome:document.querySelector(`[data-pf-nome-unidade="${idx}"]`)?.value?.trim()||`Prato ${idx+1}`,modo,regras:coletarRegrasPratoFeito(modo,idx)});
+    }
+    return {...(pratoFeitoAdminEmEdicao||{}),unidades};
+  }
+  function renderPratoFeitoForm(preservar=true){
+    const box=el('pratoFeitoCategorias');if(!box)return;
+    if(preservar)pratoFeitoAdminEmEdicao=capturarRascunhoPratoFeito();
+    const quantidade=Math.max(1,Math.min(10,Number(val('pratoFeitoQuantidade')||1)));
+    if(el('pratoFeitoQuantidade'))el('pratoFeitoQuantidade').value=quantidade;
+    const atuais=normalizarUnidadesPratoFeito(pratoFeitoAdminEmEdicao||{});
+    if(el('pratoFeitoRegraAjuda'))el('pratoFeitoRegraAjuda').textContent=quantidade>1?'Configure separadamente cada prato incluído no combo. Cada um pode ser fixo ou editável.':'Configure os ingredientes fixos ou as opções de escolha deste prato.';
+    box.innerHTML=Array.from({length:quantidade},(_,idx)=>{
+      const unidade=atuais[idx]||{nome:`Prato ${idx+1}`,modo:'fixo',regras:{}};
+      const modo=unidade.modo||'fixo';
+      return `<div class="pf-combo-unit"><div class="pf-combo-unit-head"><h4>${quantidade>1?'🍽️ Item '+(idx+1)+' do combo':'🍽️ Configuração do prato'}</h4><div class="row"><div class="field"><label>Identificação</label><input data-pf-nome-unidade="${idx}" value="${escapeHtmlPrato(unidade.nome||`Prato ${idx+1}`)}" placeholder="Ex: Prato 1"></div><div class="field"><label>Tipo</label><select data-pf-modo-unidade="${idx}" onchange="App.renderPratoFeitoForm()"><option value="fixo" ${modo==='fixo'?'selected':''}>Ingredientes não editáveis</option><option value="editavel" ${modo==='editavel'?'selected':''}>Ingredientes editáveis</option></select></div></div></div>${pratoFeitoCategoriasBase().map(cat=>{const itens=(db.itens||[]).filter(i=>i.categoria===cat&&i.ativo!==false);const regra=(unidade.regras||{})[cat]||{};const ids=new Set((regra.itemIds||[]).map(String));const limite=Number(regra.limite??(modo==='fixo'?0:(['Massa','Molho','Proteína'].includes(cat)?1:0)));return `<div class="pf-rule-box"><div class="pf-rule-head"><strong>${iconeCat(cat)} ${cat}</strong>${modo==='editavel'?`<label>Quantidade permitida <input class="pf-limit" data-pf-limit="${idx}-${cat}" type="number" min="0" step="1" value="${limite}"></label>`:''}</div><div class="pf-check-grid">${itens.map(i=>`<label class="check-line"><input type="checkbox" data-pf-unit="${idx}" data-pf-cat="${cat}" value="${i.id}" ${ids.has(String(i.id))?'checked':''}> ${i.nome}</label>`).join('')||'<small class="muted">Nenhum item ativo nesta categoria.</small>'}</div></div>`}).join('')}</div>`;
+    }).join('');
+    box.dataset.ready='1';renderPratoFeitoImagemPreview();
+  }
+  function coletarRegrasPratoFeito(modo,unidadeIdx=0){const regras={};pratoFeitoCategoriasBase().forEach(cat=>{const itemIds=[...document.querySelectorAll(`[data-pf-unit="${unidadeIdx}"][data-pf-cat="${cat}"]:checked`)].map(x=>x.value);const limite=modo==='fixo'?itemIds.length:Number(document.querySelector(`[data-pf-limit="${unidadeIdx}-${cat}"]`)?.value||0);regras[cat]={limite,itemIds};});return regras;}
+  async function salvarPratoFeito(){
+    const id=val('pratoFeitoId'),nome=val('pratoFeitoNome').trim(),descricao=val('pratoFeitoDescricao').trim(),preco=Number(val('pratoFeitoPreco')||0);
+    if(!nome)return toast('Informe o nome do prato ou combo');if(preco<=0)return toast('Informe o preço');
+    const rascunho=capturarRascunhoPratoFeito(),unidades=rascunho.unidades||[];
+    if(!unidades.length)return toast('Adicione pelo menos um prato');
+    for(let idx=0;idx<unidades.length;idx++){
+      const u=unidades[idx],total=Object.values(u.regras||{}).reduce((a,r)=>a+(r.itemIds||[]).length,0);
+      if(!total)return toast(`${u.nome||'Prato '+(idx+1)}: selecione ingredientes ou opções permitidas.`);
+      if(u.modo==='editavel')for(const [cat,r] of Object.entries(u.regras||{}))if(Number(r.limite||0)>(r.itemIds||[]).length)return toast(`${u.nome} — ${cat}: a quantidade permitida é maior que as opções marcadas.`);
+    }
+    const obj={nome,descricao,preco,quantidadePratos:unidades.length,unidades,modo:unidades.length===1?unidades[0].modo:'combo',regras:unidades.length===1?unidades[0].regras:{},imagem:val('pratoFeitoImagem')||'',ativo:!!el('pratoFeitoAtivo')?.checked,updatedAt:new Date().toISOString()};let pf;
+    if(id){const ix=(db.pratosFeitos||[]).findIndex(x=>x.id===id);if(ix>=0){db.pratosFeitos[ix]={...db.pratosFeitos[ix],...obj};pf=db.pratosFeitos[ix]}}
+    else{pf={id:uid(),onlineId:onlineId('PF'),...obj,createdAt:new Date().toISOString()};db.pratosFeitos=db.pratosFeitos||[];db.pratosFeitos.unshift(pf)}
+    save();await supabaseSalvarPratoFeito(pf);limparPratoFeito(false);renderAll();toast(unidades.length>1?'Combo salvo':'Prato feito salvo');
+  }
+  function editarPratoFeito(id){const pf=(db.pratosFeitos||[]).find(x=>x.id===id);if(!pf)return;pratoFeitoAdminEmEdicao=deepCopy({...pf,unidades:normalizarUnidadesPratoFeito(pf)});el('pratoFeitoId').value=pf.id;el('pratoFeitoNome').value=pf.nome||'';el('pratoFeitoDescricao').value=pf.descricao||'';el('pratoFeitoPreco').value=pf.preco||0;if(el('pratoFeitoQuantidade'))el('pratoFeitoQuantidade').value=normalizarUnidadesPratoFeito(pf).length;el('pratoFeitoImagem').value=pf.imagem||'';el('pratoFeitoAtivo').checked=pf.ativo!==false;el('pratoFeitoFormTitulo').textContent='Editar prato ou combo';renderPratoFeitoForm(false);page('producao');}
+  function limparPratoFeito(render=true){pratoFeitoAdminEmEdicao=null;pratoFeitoImagemTemp='';['pratoFeitoId','pratoFeitoNome','pratoFeitoDescricao','pratoFeitoPreco','pratoFeitoImagem'].forEach(id=>{if(el(id))el(id).value=''});if(el('pratoFeitoQuantidade'))el('pratoFeitoQuantidade').value=1;if(el('pratoFeitoAtivo'))el('pratoFeitoAtivo').checked=true;if(el('pratoFeitoFormTitulo'))el('pratoFeitoFormTitulo').textContent='Cadastrar prato ou combo';renderPratoFeitoForm(false);if(render)renderAll();}
+  async function removerPratoFeito(id){const pf=(db.pratosFeitos||[]).find(x=>x.id===id);if(!pf||!confirm('Remover este prato feito?'))return;db.pratosFeitos=(db.pratosFeitos||[]).filter(x=>x.id!==id);save();await supabaseRemoverPratoFeito(pf);renderAll();toast('Prato feito removido')}
+  async function alternarPratoFeitoAtivo(id){
+    const pf=(db.pratosFeitos||[]).find(x=>x.id===id);if(!pf)return;
+    pf.ativo=pf.ativo===false;pf.updatedAt=new Date().toISOString();save();
+    await supabaseSalvarPratoFeito(pf);renderAll();
+    toast(pf.ativo?'Prato ativado no cardápio.':'Prato ocultado do cardápio.');
+  }
+  async function alternarAbaPratosFeitos(){
+    db.config.pratosFeitosAtivo=db.config.pratosFeitosAtivo===false;
+    save();await supabaseSalvarLoja();
+    if(db.config.pratosFeitosAtivo===false&&portalModo==='feitos')portalModo='montar';
+    renderAll();
+    toast(db.config.pratosFeitosAtivo!==false?'Aba Pratos Feitos ativada na loja.':'Aba Pratos Feitos ocultada da loja.');
+  }
+  function renderListaPratosFeitos(){
+    const box=el('listaPratosFeitos');if(!box)return;const abaAtiva=db.config.pratosFeitosAtivo!==false;
+    const btnAba=el('alternarAbaPratosFeitosBtn');if(btnAba){btnAba.textContent=abaAtiva?'Ocultar aba Pratos e Combos da loja':'Ativar aba Pratos e Combos na loja';btnAba.className=abaAtiva?'secondary':'primary';}
+    const statusAba=el('statusAbaPratosFeitos');if(statusAba){statusAba.className='pill '+(abaAtiva?'green':'red');statusAba.textContent=abaAtiva?'Aba ativa':'Aba oculta';}
+    box.innerHTML=(db.pratosFeitos||[]).map(pf=>{const unidades=normalizarUnidadesPratoFeito(pf);const tipo=unidades.length>1?`Combo com ${unidades.length} pratos`:(unidades[0].modo==='fixo'?'Não editável':'Editável');return `<div class="list-item pf-admin-item">${pf.imagem?`<img src="${pf.imagem}" alt="${escapeHtmlPrato(pf.nome)}">`:''}<div style="flex:1"><strong>${escapeHtmlPrato(pf.nome)}</strong> <span class="pill ${pf.ativo===false?'red':'green'}">${pf.ativo===false?'Inativo':'Ativo'}</span><br><small>${tipo} • ${fmt(pf.preco)}</small>${pf.descricao?`<br><small class="pf-description">${descricaoPratoHtml(pf.descricao)}</small>`:''}</div><div class="list-actions"><button class="mini ${pf.ativo===false?'primary':'secondary'}" onclick="App.alternarPratoFeitoAtivo('${pf.id}')">${pf.ativo===false?'ativar':'inativar'}</button><button class="mini secondary" onclick="App.editarPratoFeito('${pf.id}')">editar</button><button class="mini danger-btn" onclick="App.removerPratoFeito('${pf.id}')">remover</button></div></div>`}).join('')||'<p class="muted">Nenhum prato ou combo cadastrado.</p>';
+  }
+
+  function renderProducao(){renderReceitaTemp();renderListaPratosFeitos();if(el('pratoFeitoCategorias')&&!el('pratoFeitoCategorias').dataset.ready)renderPratoFeitoForm(false);const lr=el('listaReceitas'),lp=el('listaProducoes'),pv=el('previewProducao');if(!lr)return;lr.innerHTML=(db.receitas||[]).map(r=>{const prod=db.itens.find(i=>i.id===r.produtoId);const custo=(r.insumos||[]).reduce((a,ins)=>{const item=db.itens.find(i=>i.id===ins.itemId);return a+(item?Number(item.custo||0)*Number(ins.qtd||0):0)},0);return `<div class="list-item"><div style="flex:1"><strong>${prod?prod.nome:'Produto removido'}</strong><br><small>Rende ${r.rendimento} ${r.unidade} • custo estimado ${fmt(custo)}</small><br><small>${(r.insumos||[]).map(ins=>{const it=db.itens.find(i=>i.id===ins.itemId);return `${it?it.nome:'Item removido'} ${ins.qtd} ${it?it.unidade||'un':''}`}).join(' • ')}</small></div><div class="list-actions"><button class="mini secondary" onclick="App.editarReceita('${r.id}')">editar</button><button class="mini danger-btn" onclick="App.removerReceita('${r.id}')">remover</button></div></div>`}).join('')||'<p class="muted">Nenhuma ficha técnica cadastrada.</p>';
     if(lp)lp.innerHTML=(db.producoes||[]).slice(0,60).map(p=>{const prod=db.itens.find(i=>i.id===p.produtoId);return `<div class="list-item"><div><strong>${prod?prod.nome:'Produto removido'}</strong><br><small>${new Date(p.data).toLocaleString('pt-BR')} • ${p.receitas||''} receita(s) • ${p.qtd} ${p.unidade} • custo ${fmt(p.custo)}</small></div></div>`}).join('')||'<p class="muted">Nenhuma produção registrada.</p>';
     if(pv){const r=(db.receitas||[]).find(x=>x.id===val('producaoReceita'));const qtd=Number(val('producaoQtd')||0);if(!r){pv.innerHTML='<p class="muted">Selecione uma ficha para ver os insumos necessários.</p>'}else{const fator=qtd>0?qtd:1;const produzido=qtd>0?qtd*Number(r.rendimento||1):Number(r.rendimento||1);pv.innerHTML=`<h4>Insumos necessários ${qtd>0?'para '+qtd+' receita(s) = '+produzido+' '+r.unidade:'por receita'}</h4>`+(r.insumos||[]).map(ins=>{const it=db.itens.find(i=>i.id===ins.itemId);const precisa=Number(ins.qtd||0)*fator;const ok=it&&Number(it.estoque||0)>=precisa;return `<div class="list-item compact"><div><strong>${it?it.nome:'Item removido'}</strong><br><small>Precisa ${precisa.toFixed(2)} ${it?it.unidade||'un':''} • estoque ${it?it.estoque:0}</small></div><span class="pill ${ok?'':'red'}">${ok?'ok':'baixo'}</span></div>`}).join('')}}}
 
@@ -1015,6 +1137,7 @@ const App=(()=>{
         adminSenha:db.config.adminSenha||ADMIN_DEFAULT_PASS,
         operacaoSenha:db.config.operacaoSenha||OPERACAO_DEFAULT_PASS,
         modoOperacao:!!db.config.modoOperacao,
+        pratosFeitosAtivo:db.config.pratosFeitosAtivo!==false,
         cnpj:db.config.cnpj||'',
         email:db.config.email||'',
         enderecoEmpresa:db.config.enderecoEmpresa||''
@@ -1224,6 +1347,13 @@ const App=(()=>{
   async function supabaseSincronizarReceitasLocais(){
     try{for(const r of (db.receitas||[])){if(!r.supabase_id)await supabaseSalvarReceita(r)}db.sync.status='online';db.sync.lastSync=new Date().toISOString();Data.save(db)}catch(e){console.warn('Sincronizar receitas:',e)}
   }
+  function mapPratoFeitoSupabase(row){return {id:'sbpf_'+row.id,supabase_id:row.id,onlineId:row.codigo||('PF-'+row.id),nome:row.nome||'',descricao:row.descricao||'',preco:Number(row.preco||0),modo:row.modo||'fixo',regras:row.regras||{},imagem:row.imagem||'',ativo:row.ativo!==false,createdAt:row.criado_em||new Date().toISOString(),updatedAt:row.atualizado_em||row.criado_em||new Date().toISOString(),syncStatus:'sincronizado'};}
+  function payloadPratoFeitoSupabase(p){return {loja_id:supabaseLojaId,codigo:p.onlineId||p.id||onlineId('PF'),nome:p.nome||'',descricao:p.descricao||'',preco:Number(p.preco||0),modo:p.modo||'fixo',regras:p.regras||{},imagem:p.imagem||'',ativo:p.ativo!==false,atualizado_em:new Date().toISOString()};}
+  function mesclarPratosFeitosSupabase(rows){const rem=(rows||[]).map(mapPratoFeitoSupabase);const locais=(db.pratosFeitos||[]).filter(p=>!p.supabase_id&&!rem.some(r=>r.onlineId===p.onlineId));db.pratosFeitos=[...rem,...locais];}
+  async function supabaseCarregarPratosFeitos(){try{await supabaseGetLoja();const rows=await supabaseRequest('/pratos_feitos?select=*&order=criado_em.desc&limit=200');mesclarPratosFeitosSupabase(rows||[]);Data.save(db);renderListaPratosFeitos();renderPortalPratosFeitos();}catch(e){console.warn('Supabase pratos feitos:',e)}}
+  async function supabaseSalvarPratoFeito(p){try{await supabaseGetLoja();if(!p.onlineId)p.onlineId=onlineId('PF');const payload=payloadPratoFeitoSupabase(p);const sid=p.supabase_id||(String(p.id||'').startsWith('sbpf_')?String(p.id).replace('sbpf_',''):null);if(sid){await supabaseRequest('/pratos_feitos?id=eq.'+encodeURIComponent(sid),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});return true;}const criado=await supabaseRequest('/pratos_feitos?select=id',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});if(criado?.[0]?.id)p.supabase_id=criado[0].id;return true;}catch(e){console.warn('Salvar prato feito:',e);toast('Prato salvo localmente, mas falta executar o SQL dos pratos feitos no Supabase.');return false}}
+  async function supabaseRemoverPratoFeito(p){try{const sid=p?.supabase_id||(String(p?.id||'').startsWith('sbpf_')?String(p.id).replace('sbpf_',''):null);if(sid)await supabaseRequest('/pratos_feitos?id=eq.'+encodeURIComponent(sid),{method:'DELETE'});}catch(e){console.warn('Remover prato feito:',e)}}
+
   function mapProducaoSupabase(row){
     return {id:'sbprod_'+row.id,supabase_id:row.id,onlineId:row.codigo||('PROD-'+row.id),receitaId:idLocalReceitaBySupabase(row.receita_id),produtoId:idLocalItemBySupabase(row.produto_item_id),qtd:Number(row.quantidade||0),unidade:row.unidade||'un',custo:Number(row.custo_total||0),data:row.data_producao||row.criado_em||new Date().toISOString(),status:row.status||'finalizado',obs:row.observacao||'',insumos:(row.insumos||[]).map(ins=>({...ins,itemId:idLocalItemBySupabase(ins.estoque_item_id)||ins.itemId||'',qtdUsada:Number(ins.qtdUsada||ins.quantidade_usada||ins.qtd||0)})),createdAt:row.criado_em||new Date().toISOString(),updatedAt:row.atualizado_em||row.criado_em||new Date().toISOString(),syncStatus:'sincronizado'};
   }
@@ -1285,7 +1415,7 @@ const App=(()=>{
     const data=row.criado_em||row.created_at||new Date().toISOString();
     const numero=(row.codigo||'').split('-').pop()||String(row.numero||row.id||'').padStart(4,'0');
     const origemDetectada=String(row.codigo||'').startsWith('PED-')?'online':'interno';
-    const mappedItens=(itens||[]).map(i=>({id:i.id,nome:i.nome,tipo:i.tipo,categoria:i.tipo,quantidade:i.quantidade,qtdUsada:Number(i.quantidade||1),unidade:'un',preco:Number(i.preco||0),valorCobrado:Number(i.preco||0),observacao:i.observacao||'',pratoIndex:(String(i.observacao||'').match(/prato:(\d+)/)||[])[1]?Number((String(i.observacao||'').match(/prato:(\d+)/)||[])[1]):0}));
+    const mappedItens=(itens||[]).map(i=>{const obs=String(i.observacao||'');const pratoMatch=obs.match(/prato:(\d+)/);const comboMatch=obs.match(/combo:(\d+)/);const nomeMatch=obs.match(/comboNome:([^|]+)/);let unidadeComboNome='';try{unidadeComboNome=nomeMatch?.[1]?decodeURIComponent(nomeMatch[1]):''}catch(e){unidadeComboNome=nomeMatch?.[1]||''}return {id:i.id,nome:i.nome,tipo:i.tipo,categoria:i.tipo,quantidade:i.quantidade,qtdUsada:Number(i.quantidade||1),unidade:'un',preco:Number(i.preco||0),valorCobrado:Number(i.preco||0),observacao:i.observacao||'',pratoIndex:pratoMatch?.[1]?Number(pratoMatch[1]):0,unidadeCombo:comboMatch?.[1]?Number(comboMatch[1]):0,unidadeComboNome};});
     const pago=(row.pago===true||row.status_pagamento==='pago');const reserva=extrairReserva(row.observacao||'');return {id:'sb_'+row.id,supabase_id:row.id,onlineId:row.codigo||row.id,numero,cliente:cliente?.nome||row.cliente_nome||'Cliente online',telefone:cliente?.telefone||row.cliente_telefone||'',tipo:row.tipo_entrega==='delivery'?'Delivery':'Balcão',pagamento:pago?(row.forma_pagamento||'PIX'):'',pagamentoPrevisto:row.forma_pagamento||'PIX',pagamentoRecebido:pago,dataPagamento:row.pago_em||'',talher:row.talher?'Sim':'Não',atendimento:reserva.atendimento,reservaData:reserva.reservaData,reservaHorario:reserva.reservaHorario,reservaIniciada:reserva.reservaIniciada,obs:reserva.obs,cep:cliente?.cep||row.cep||'',rua:cliente?.rua||row.rua||'',numeroEndereco:cliente?.numero||row.numero_endereco||'',complemento:cliente?.complemento||row.complemento||'',endereco:cliente?.endereco||row.endereco||'',bairro:cliente?.bairro||row.bairro||'',cidade:cliente?.cidade||row.cidade||'',uf:cliente?.uf||row.uf||'',clienteId:cliente?.id||'',pratos:pratosDoPedido({itens:mappedItens}).map((pr,idx)=>({...pr,id:'pr_'+row.id+'_'+idx,nome:'Pedido '+(idx+1),total:0,custo:0})),itens:mappedItens,total:Number(row.valor_total||0),subtotalBruto:Number(row.subtotal_bruto||row.valor_total||0),desconto:Number(row.desconto||0),cupom:row.cupom_codigo||'',custo:0,lucro:Number(row.valor_total||0),status:({aguardando_confirmacao:'Aguardando confirmação',pedido_feito:'Pedido Feito',preparando:'Preparando',pedido_pronto:'Pedido Pronto',entregue:'Entregue'}[row.status]||row.status||'Aguardando confirmação'),financeiroLancado:pago,estoqueBaixado:false,origem:origemDetectada,data,timeline:[{status:'Importado do Supabase',data}],syncStatus:'sincronizado'};
   }
 
@@ -1438,7 +1568,7 @@ const App=(()=>{
       const created=await supabaseRequest('/pedidos?select=*',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});
       const row=created?.[0]; if(!row)throw new Error('Pedido sem retorno do Supabase');
       p.supabase_id=row.id;p.onlineId=row.codigo;p.syncStatus='sincronizado';
-      const itens=((p.pratos&&p.pratos.length)?p.pratos:[{itens:p.itens||[]}]).flatMap((pr,idx)=>(pr.itens||[]).map(i=>({pedido_id:row.id,tipo:i.categoria||i.tipo||'Item',nome:i.nome,quantidade:Number(i.qtdUsada||i.quantidade||1),preco:Number(i.valorCobrado??i.preco??0),observacao:'prato:'+(idx+1)})));
+      const itens=((p.pratos&&p.pratos.length)?p.pratos:[{itens:p.itens||[]}]).flatMap((pr,idx)=>(pr.itens||[]).map(i=>{const unidade=Number(i.unidadeCombo||0);const unidadeNome=i.unidadeComboNome||(unidade>0?pr.unidadesCombo?.[unidade-1]?.nome:'')||'';const marcadores=['prato:'+(idx+1)];if(unidade>0){marcadores.push('combo:'+unidade);if(unidadeNome)marcadores.push('comboNome:'+encodeURIComponent(unidadeNome))}return {pedido_id:row.id,tipo:i.categoria||i.tipo||'Item',nome:i.nome,quantidade:Number(i.qtdUsada||i.quantidade||1),preco:Number(i.valorCobrado??i.preco??0),observacao:marcadores.join('|')}}));
       if(itens.length)await supabaseRequest('/pedido_itens',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(itens)});
       db.sync.status='online';db.sync.lastSync=new Date().toISOString();Data.save(db);
       return true;
@@ -1512,7 +1642,7 @@ const App=(()=>{
   }
 
   async function supabaseInicializar(){
-    try{await supabaseGetLoja();await supabaseCarregarItens();await supabaseCarregarCupons();if(!isPublicClient()){await supabaseSincronizarItensLocais();await supabaseCarregarCompras();await supabaseSincronizarComprasLocais();await supabaseCarregarReceitas();await supabaseSincronizarReceitasLocais();await supabaseCarregarProducoes();await supabaseSincronizarProducoesLocais();await supabaseCarregarMovimentacoes();await supabaseSincronizarMovimentacoesLocais();}await supabaseCarregarPedidos();setInterval(async()=>{try{await supabaseGetLoja(true);renderOnlineReady();renderPortalCliente();renderOperacao();if(!isPublicClient()){supabaseCarregarItens();supabaseCarregarCompras();supabaseCarregarReceitas();supabaseCarregarProducoes();supabaseCarregarMovimentacoes();supabaseCarregarCupons();supabaseCarregarPedidos()}else{supabaseCarregarCupons();}}catch(e){console.warn('Atualização loja/online ready:',e)}},8000);}catch(e){console.warn('Supabase init:',e)}
+    try{await supabaseGetLoja();await supabaseCarregarItens();await supabaseCarregarCupons();await supabaseCarregarPratosFeitos();if(!isPublicClient()){await supabaseSincronizarItensLocais();await supabaseCarregarCompras();await supabaseSincronizarComprasLocais();await supabaseCarregarReceitas();await supabaseSincronizarReceitasLocais();await supabaseCarregarProducoes();await supabaseSincronizarProducoesLocais();await supabaseCarregarMovimentacoes();await supabaseSincronizarMovimentacoesLocais();}await supabaseCarregarPedidos();setInterval(async()=>{try{await supabaseGetLoja(true);renderOnlineReady();renderPortalCliente();renderOperacao();if(!isPublicClient()){supabaseCarregarItens();supabaseCarregarCompras();supabaseCarregarReceitas();supabaseCarregarPratosFeitos();supabaseCarregarProducoes();supabaseCarregarMovimentacoes();supabaseCarregarCupons();supabaseCarregarPedidos()}else{supabaseCarregarCupons();supabaseCarregarPratosFeitos();}}catch(e){console.warn('Atualização loja/online ready:',e)}},8000);}catch(e){console.warn('Supabase init:',e)}
   }
 
   function coletarOnlineReadyForm(){
@@ -1612,6 +1742,50 @@ const App=(()=>{
     save();toast('IDs universais verificados');
   }
 
+
+  function mudarModoPortal(modo){if(modo==='feitos'&&db.config.pratosFeitosAtivo===false)return toast('Pratos feitos indisponíveis no momento.');portalModo=modo==='feitos'?'feitos':'montar';el('portalItens')?.classList.toggle('hidden',portalModo!=='montar');el('portalPratosFeitos')?.classList.toggle('hidden',portalModo!=='feitos');el('portalModoMontarBtn')?.classList.toggle('active-mode',portalModo==='montar');el('portalModoFeitosBtn')?.classList.toggle('active-mode',portalModo==='feitos');renderPortalPratosFeitos();setTimeout(()=>scrollPortalTo(portalModo==='feitos'?'portalPratosFeitos':'portalItens'),60);}
+  function regrasPratoFeitoDisponiveis(pf){return Object.fromEntries(Object.entries(pf.regras||{}).map(([cat,r])=>[cat,{...r,itemIds:(r.itemIds||[]).filter(id=>{const i=itemPorIdFlex(id);return i&&itemDisponivelVenda(i)})}]));}
+  function mesmoId(a,b){return String(a??'')===String(b??'');}
+  function itemPorIdFlex(id){return (db.itens||[]).find(i=>mesmoId(i.id,id));}
+  function escapeHtmlPrato(text){return String(text||'').replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));}
+  function descricaoPratoHtml(text){return escapeHtmlPrato(text).replace(/\n/g,'<br>');}
+  function iniciarPratoFeito(id){
+    const pf=(db.pratosFeitos||[]).find(x=>mesmoId(x.id,id)&&x.ativo!==false);if(!pf)return toast('Prato ou combo não encontrado.');
+    const unidades=normalizarUnidadesPratoFeito(pf);const todosFixos=unidades.every(u=>u.modo==='fixo');
+    if(todosFixos){const grupos=unidades.map(u=>Object.values(u.regras||{}).flatMap(r=>r.itemIds||[]));const ids=grupos.flat();if(!ids.length)return toast('Este produto ainda não possui ingredientes configurados.');const ausentes=ids.filter(itemId=>!itemPorIdFlex(itemId));if(ausentes.length)return toast('Este produto possui ingredientes que não existem mais no cardápio.');const indisponiveis=ids.map(itemPorIdFlex).filter(i=>i&&!itemDisponivelVenda(i));if(indisponiveis.length)return toast('Indisponível no momento: '+[...new Set(indisponiveis.map(i=>i.nome))].join(', '));if(adicionarPratoFeitoAoCarrinho(pf,grupos)){setTimeout(()=>{toast(pf.nome+' foi adicionado ao carrinho.');scrollPortalTo('portalResumo');},80);}return;}
+    pratoFeitoPortalAtual=pf;pratoFeitoSelecao={};pratoFeitoConfirmacoesIgnoradas=new Set();renderPortalPratosFeitos();setTimeout(()=>scrollPortalTo('pfConfigurador'),60);
+  }
+  function toggleItemPratoFeito(unidadeIdx,itemId){
+    const pf=pratoFeitoPortalAtual;if(!pf)return;const unidades=normalizarUnidadesPratoFeito(pf),u=unidades[Number(unidadeIdx)];if(!u)return;
+    const item=itemPorIdFlex(itemId);if(!item||!itemDisponivelVenda(item))return toast('Item indisponível.');const regra=(u.regras||{})[item.categoria]||{limite:0,itemIds:[]};
+    pratoFeitoSelecao[unidadeIdx]=pratoFeitoSelecao[unidadeIdx]||{};const atuais=pratoFeitoSelecao[unidadeIdx][item.categoria]||[];const existente=atuais.find(x=>mesmoId(x,itemId));
+    if(existente!==undefined)pratoFeitoSelecao[unidadeIdx][item.categoria]=atuais.filter(x=>!mesmoId(x,itemId));else{if(atuais.length>=Number(regra.limite||0))return toast(`Escolha no máximo ${regra.limite} opção(ões) de ${item.categoria}.`);pratoFeitoSelecao[unidadeIdx][item.categoria]=[...atuais,item.id];}renderPortalPratosFeitos();
+  }
+  function confirmarPratoFeitoEditavel(){
+    const pf=pratoFeitoPortalAtual;if(!pf)return;const unidades=normalizarUnidadesPratoFeito(pf),grupos=[];
+    for(let idx=0;idx<unidades.length;idx++){
+      const u=unidades[idx];if(u.modo==='fixo'){grupos.push(Object.values(u.regras||{}).flatMap(r=>r.itemIds||[]));continue;}
+      const regras=regrasPratoFeitoDisponiveis({regras:u.regras}),selecao=pratoFeitoSelecao[idx]||{},opcionais=[];
+      for(const [cat,rOriginal] of Object.entries(u.regras||{})){const limite=Number(rOriginal.limite||0);if(limite<=0)continue;const disponiveis=(regras[cat]?.itemIds||[]).length;if(disponiveis<limite&&['Massa','Molho'].includes(cat))return toast(`${u.nome} — ${cat}: não há opções suficientes disponíveis.`);const escolhidos=(selecao[cat]||[]).length;if(['Massa','Molho'].includes(cat)){if(escolhidos!==limite)return toast(`${u.nome} — ${cat}: escolha exatamente ${limite} opção(ões).`);}else{if(escolhidos>limite)return toast(`${u.nome} — ${cat}: escolha no máximo ${limite} opção(ões).`);if(escolhidos===0)opcionais.push(cat);}}
+      for(const cat of opcionais){const chave=`${idx}-${cat}`;if(pratoFeitoConfirmacoesIgnoradas.has(chave))continue;const seguir=confirm(`${u.nome}: você tem direito a escolher ${Number((u.regras||{})[cat]?.limite||0)} item(ns) de ${cat}. Tem certeza de que não deseja adicionar ${cat.toLowerCase()}?`);if(!seguir)return;pratoFeitoConfirmacoesIgnoradas.add(chave);}const ids=Object.values(selecao).flat();if(!ids.length)return toast(`${u.nome}: escolha pelo menos a massa e o molho.`);grupos.push(ids);
+    }
+    if(adicionarPratoFeitoAoCarrinho(pf,grupos)){pratoFeitoPortalAtual=null;pratoFeitoSelecao={};renderPortalCliente();setTimeout(()=>{toast(pf.nome+' foi adicionado ao carrinho.');scrollPortalTo('portalResumo');},80);}
+  }
+  function adicionarPratoFeitoAoCarrinho(pf,grupos){
+    try{if(!pf)return false;const unidades=normalizarUnidadesPratoFeito(pf);if(!Array.isArray(grupos?.[0]))grupos=[grupos||[]];const precoFechado=Math.max(0,Number(pf.preco)||0),itens=[];
+      grupos.forEach((ids,uIdx)=>{const vistos=new Set();(ids||[]).forEach(id=>{const item=itemPorIdFlex(id);if(!item||vistos.has(String(item.id)))return;vistos.add(String(item.id));let qtd=1;try{qtd=Number(defaultQtd(item)||tamanhoPorcaoEstoque(item)||item.porcao||1)||1}catch(e){}let custoItem=0;try{custoItem=Number(custoPorQtd(item,qtd)||0)||0}catch(e){}itens.push({...item,id:item.id,nome:item.nome,categoria:item.categoria,qtdUsada:qtd,porcao:Number(item.porcao||1)||1,porcoes:1,porcoesGratis:1,porcoesPagas:0,valorCobrado:0,preco:0,custoCalculado:custoItem,pratoFeitoId:pf.id,pratoFeitoNome:pf.nome||'Prato/Combo',unidadeCombo:uIdx+1,unidadeComboNome:unidades[uIdx]?.nome||`Prato ${uIdx+1}`});});});
+      if(!itens.length){toast('Não foi possível carregar os ingredientes deste produto.');return false;}itens[0].valorCobrado=precoFechado;itens[0].preco=precoFechado;itens[0].porcoesPagas=1;itens[0].porcoesGratis=0;
+      portalPratos.push({id:uid(),nome:pf.nome||'Prato/Combo',itens,total:precoFechado,custo:itens.reduce((s,i)=>s+(Number(i.custoCalculado)||0),0),tipo:unidades.length>1?'combo':'prato-feito',pratoFeitoId:pf.id,unidadesCombo:unidades.map((u,idx)=>({nome:u.nome,itens:itens.filter(i=>i.unidadeCombo===idx+1)}))});portalPedido={itens:{},qtd:{}};pratoFeitoConfirmacoesIgnoradas=new Set();renderPortalCliente();return true;
+    }catch(e){console.error('Erro ao adicionar prato/combo:',e);toast('Não foi possível adicionar este produto. Verifique os ingredientes cadastrados.');return false;}
+  }
+  function renderPortalPratosFeitos(){
+    const box=el('portalPratosFeitos');if(!box)return;const abaAtiva=db.config.pratosFeitosAtivo!==false;const botao=el('portalModoFeitosBtn');if(botao)botao.classList.toggle('hidden',!abaAtiva);if(!abaAtiva){if(portalModo==='feitos'){portalModo='montar';el('portalItens')?.classList.remove('hidden');box.classList.add('hidden');el('portalModoMontarBtn')?.classList.add('active-mode');}box.innerHTML='';return;}
+    const pratos=(db.pratosFeitos||[]).filter(p=>p.ativo!==false);if(!pratos.length){box.innerHTML='<div class="empty-summary">Nenhum prato ou combo disponível no momento.</div>';return;}
+    let html=`<section class="portal-cat"><h4>🍽️ Pratos e Combos</h4><div class="pf-store-grid">${pratos.map(pf=>{const us=normalizarUnidadesPratoFeito(pf),fixos=us.every(u=>u.modo==='fixo');return `<article class="pf-store-card">${pf.imagem?`<div class="pf-store-image"><img src="${pf.imagem}" alt="${escapeHtmlPrato(pf.nome)}"></div>`:'<div class="pf-placeholder">🍝</div>'}<div class="pf-store-body"><strong>${escapeHtmlPrato(pf.nome)}</strong><p class="pf-description">${descricaoPratoHtml(pf.descricao)}</p><small>${us.length>1?`Combo com ${us.length} pratos`:fixos?'Combinação fixa':'Você escolhe dentro das opções'}</small><b>${fmt(pf.preco)}</b><button type="button" class="online-primary full" onclick="App.iniciarPratoFeito('${pf.id}')">${fixos?'Adicionar ao carrinho':'Escolher'}</button></div></article>`}).join('')}</div></section>`;
+    if(pratoFeitoPortalAtual){const pf=pratoFeitoPortalAtual,unidades=normalizarUnidadesPratoFeito(pf);html+=`<section id="pfConfigurador" class="pf-configurator"><h4>Configure: ${escapeHtmlPrato(pf.nome)}</h4><p class="pf-description">${descricaoPratoHtml(pf.descricao)}</p>${unidades.map((u,idx)=>{if(u.modo==='fixo')return `<div class="pf-combo-store-unit"><h4>${escapeHtmlPrato(u.nome)}</h4><p class="muted">Combinação fixa incluída no combo.</p></div>`;const regras=regrasPratoFeitoDisponiveis({regras:u.regras});return `<div class="pf-combo-store-unit"><h4>${escapeHtmlPrato(u.nome)}</h4>${Object.entries(regras).filter(([,r])=>Number(r.limite||0)>0).map(([cat,r])=>`<div class="pf-choice-group"><strong>${iconeCat(cat)} ${cat} — escolha até ${r.limite}${['Massa','Molho'].includes(cat)?' (obrigatório)':''}</strong><div class="portal-grid">${r.itemIds.map(id=>{const i=itemPorIdFlex(id);if(!i)return '';const sel=((pratoFeitoSelecao[idx]||{})[cat]||[]).some(x=>mesmoId(x,id));return `<button type="button" class="option compact-option ${sel?'selected':''}" onclick="App.toggleItemPratoFeito(${idx},'${i.id}')"><div class="icon small-icon">${i.imagem?`<img src="${i.imagem}" alt="${escapeHtmlPrato(i.nome)}">`:(i.icone||iconeCat(cat))}</div><strong>${escapeHtmlPrato(i.nome)}</strong></button>`}).join('')}</div></div>`).join('')}</div>`}).join('')}<button type="button" class="online-primary full" onclick="App.confirmarPratoFeitoEditavel()">Adicionar por ${fmt(pf.preco)}</button><button type="button" class="secondary full" onclick="App.cancelarPratoFeito()">Cancelar</button></section>`;}
+    box.innerHTML=html;
+  }
+  function cancelarPratoFeito(){pratoFeitoPortalAtual=null;pratoFeitoSelecao={};pratoFeitoConfirmacoesIgnoradas=new Set();renderPortalCliente();}
 
   function portalSelectedItems(){const sel=Object.keys(portalPedido.itens||{}).filter(id=>portalPedido.itens[id]).map(id=>{const it=db.itens.find(i=>i.id===id);if(!it)return null;const qtd=normalizarQtd(it,portalPedido.qtd[id]||defaultQtd(it));return {...it,qtdUsada:qtd,porcao:Number(it.porcao||1)};}).filter(Boolean);return applyPrices(sel)}
   function portalCurrentPrato(){const itens=portalSelectedItems();if(!itens.length)return null;const total=itens.reduce((a,i)=>a+Number(i.valorCobrado||0),0);const custo=itens.reduce((a,i)=>a+Number(i.custoCalculado||0),0);const temBase=itens.some(i=>['Massa','Molho','Proteína','Complemento','Finalização'].includes(i.categoria));return {id:uid(),nome:temBase?'Prato '+(portalPratos.length+1):'Itens avulsos',itens,total,custo};}
@@ -1722,7 +1896,8 @@ const App=(()=>{
     limparSelecoesIndisponiveisPortal(false);
     const grupos=itensVisiveisPortal();
     const hasCat=cat=>grupos.some(g=>g.cat===cat&&g.itens.length);
-    el('onlinePratosProntosBtn')?.classList.toggle('hidden',!hasCat('Prato Pronto'));
+    renderPortalPratosFeitos();
+    el('portalItens')?.classList.toggle('hidden',portalModo!=='montar');el('portalPratosFeitos')?.classList.toggle('hidden',portalModo!=='feitos');
     el('onlineBebidasBtn')?.classList.add('hidden');
     el('onlineSobremesasBtn')?.classList.toggle('hidden',!hasCat('Sobremesa'));
     const box=el('portalItens');
@@ -1748,7 +1923,22 @@ const App=(()=>{
   function telefoneCombina(a,b){return telefoneCombinaForte(a,b)}
   function portalTelefoneValor(){return chaveTelefone(val('portalTelefoneFinal')||val('portalTelefone'))}
   function setPortalTelefone(v){if(el('portalTelefone'))el('portalTelefone').value=v||'';if(el('portalTelefoneFinal'))el('portalTelefoneFinal').value=v||''}
-  function sincronizarTelefonePortal(origem){const v=(origem==='final'?val('portalTelefoneFinal'):val('portalTelefone'));setPortalTelefone(v);const tel=chaveTelefone(v);const box=el('portalClienteStatus');if(portalClienteIdentificado&&!telefoneCombina(tel,portalClienteIdentificado.telefone)){portalClienteIdentificado=null;if(box){box.className='portal-welcome muted';box.innerHTML='Telefone alterado. Clique em Localizar ou no nome encontrado para usar um cadastro.'}}if(!portalClienteIdentificado&&tel.length>=8&&box){const c=(db.clientes||[]).find(x=>telefoneCombina(tel,x.telefone));if(c){box.className='portal-welcome ok-box';box.innerHTML=`Cadastro encontrado: <button class="link-button" onclick="App.selecionarClientePortalOnline('${c.id}')"><strong>${c.nome||'Cliente'}</strong></button><br><small>Clique no nome para usar esse cadastro neste pedido.</small>`;}}}
+  function sincronizarTelefonePortal(origem){
+    const v=(origem==='final'?val('portalTelefoneFinal'):val('portalTelefone'));setPortalTelefone(v);
+    const tel=chaveTelefone(v),box=el('portalClienteStatus');
+    if(portalClienteIdentificado&&!telefoneCombina(tel,portalClienteIdentificado.telefone)){
+      portalClienteIdentificado=null;
+      if(box){box.className='portal-welcome muted';box.innerHTML='Telefone alterado. Buscando o cadastro atualizado...';}
+    }
+    clearTimeout(portalBuscaTelefoneTimer);
+    if(tel.length<10){if(!portalClienteIdentificado&&box){box.className='portal-welcome muted';box.innerHTML='Informe o WhatsApp com DDD para localizar seu cadastro.';}return;}
+    portalBuscaTelefoneTimer=setTimeout(async()=>{
+      let c=encontrarClientePorTelefone(tel);
+      if(!c){try{await supabaseCarregarClientesOficiais();c=encontrarClientePorTelefone(tel);}catch(e){console.warn('Busca automática de cliente:',e)}}
+      if(c&&chaveTelefone(portalTelefoneValor())===tel){aplicarClientePortal(c,origem==='final');}
+      else if(!c&&box&&chaveTelefone(portalTelefoneValor())===tel){portalClienteIdentificado=null;box.className='portal-welcome warn-box';box.innerHTML='Cadastro não encontrado. Preencha seus dados para continuar como novo cliente.';}
+    },450);
+  }
   function irParaCheckoutPortal(){scrollPortalTo('portalCheckout');setTimeout(()=>{const f=el('portalTelefoneFinal')||el('portalTelefone')||el('portalCliente');if(f)f.focus();},220)}
   function pedidosDoCliente(c){if(!c)return [];return (db.pedidos||[]).filter(p=>telefoneCombina(p.telefone,c.telefone)||((p.cliente||'').toLowerCase()===(c.nome||'').toLowerCase())).sort((a,b)=>new Date(b.data)-new Date(a.data))}
   function formatarUltimoPedido(p){if(!p)return '';const itens=(p.itens||[]).slice(0,5).map(i=>i.nome).join(', ');return `<div class="last-order"><strong>Último pedido #${p.numero}</strong><br><small>${itens||'sem itens'} • ${fmt(p.total||0)}</small><br><button class="mini secondary" onclick="App.repetirUltimoPedidoPortal('${p.id}')">Repetir último pedido</button></div>`}
@@ -2169,7 +2359,7 @@ const App=(()=>{
       if(sc)kanbanScrolls[col.dataset.status]=sc.scrollTop;
     });
     const active=document.querySelector('.page.active')?.id||'';
-    renderSelects();renderFavoritos();renderSteps();renderResumo();renderListas();renderReservados();renderDashboard();renderConfig();renderInsights();renderRelatorios();renderOnlineReady();renderPortalCliente();renderOperacao();renderCupons();renderAssistentePorcoes();aplicarPerfilAcesso();
+    renderSelects();renderFavoritos();renderSteps();renderResumo();renderListas();renderReservados();renderDashboard();renderConfig();renderInsights();renderRelatorios();renderOnlineReady();renderPortalCliente();renderOperacao();renderCupons();renderListaPratosFeitos();renderAssistentePorcoes();aplicarPerfilAcesso();
     if(keepScroll!==null){
       const restore=()=>{
         if(active==='page-pedidos'){
@@ -2189,6 +2379,6 @@ const App=(()=>{
   function init(){try{const q=new URLSearchParams(location.search);if(!q.has('admin')&&!String(location.hash||'').includes('admin'))document.body.classList.add('public-client');else document.body.classList.add('admin-mode');}catch(e){document.body.classList.add('public-client')}if(document.body.classList.contains('admin-mode')&&!sessionStorage.getItem(ADMIN_SESSION_KEY)){mostrarLoginAdmin();document.body.classList.remove('booting');document.body.classList.add('boot-ready');return;}if(document.body.classList.contains('admin-mode')&&!sessionStorage.getItem(ADMIN_ROLE_KEY))sessionStorage.setItem(ADMIN_ROLE_KEY,'admin');document.querySelectorAll('button:not([type])').forEach(b=>b.setAttribute('type','button'));document.addEventListener('submit',ev=>ev.preventDefault());document.querySelectorAll('[data-toggle-password]').forEach(btn=>btn.addEventListener('click',()=>togglePasswordInput(btn.dataset.togglePassword,btn)));document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',ev=>{ev.preventDefault();page(b.dataset.page)}));document.querySelectorAll('.mobile-op-nav button').forEach(b=>b.addEventListener('click',ev=>{ev.preventDefault();page(b.dataset.opPage)}));['clientePedido','tipoPedido','atendimentoPedido','reservaDataPedido','reservaHorarioPedido','pagamentoPedido','obsPedido','pedidoCep','pedidoRua','pedidoNumeroEndereco','pedidoComplemento','enderecoPedido','pedidoBairro','bairroPedido','pedidoCidade','pedidoUf'].forEach(id=>{if(el(id))el(id).addEventListener('input',renderResumo)});['cfgNome','cfgSlogan','cfgCnpj','cfgEmail','cfgEnderecoEmpresa','cfgInstagram','cfgPix','cfgWhatsapp','cfgTaxa','cfgRaioEntrega','cfgTempoPreparo','cfgGratis','cfgProteinasGratis','cfgFinalizacoesGratis','cfgMetaDiaria','cfgNomeInterno','cfgAdminSenha','cfgOperacaoSenha','cfgModoOperacao'].forEach(id=>{const x=el(id);if(x){['focus','input','change'].forEach(ev=>x.addEventListener(ev,()=>{configEditing=true;configLastUserInput=Date.now();}));}});
     if(el('producaoQtd')) el('producaoQtd').addEventListener('input',()=>{renderProducao();});
     ['pedido','portal','cli'].forEach(prefix=>{const cep=el(prefix+'Cep');if(cep)cep.addEventListener('blur',()=>buscarCep(prefix));});if(el('producaoReceita')) el('producaoReceita').addEventListener('change',()=>{renderProducao();});if(el('telefonePedido')){el('telefonePedido').addEventListener('input',()=>{renderResumo();buscarClientesPedido()})}if(el('portalTelefone')){el('portalTelefone').addEventListener('input',()=>sincronizarTelefonePortal('top'))}if(el('portalTelefoneFinal')){el('portalTelefoneFinal').addEventListener('input',()=>sincronizarTelefonePortal('final'))}if(el('compraData')&&!el('compraData').value)el('compraData').value=hoje();if(el('insightDataIni')&&!el('insightDataIni').value)el('insightDataIni').value=hojeLocal();if(el('insightDataFim')&&!el('insightDataFim').value)el('insightDataFim').value=hojeLocal();renderAll();aplicarModoOperacao();aplicarPerfilAcesso();const last=localStorage.getItem(KEY+'_last_page');if(isPublicClient())page('portal');else if(perfilAtual()==='operacao')page(paginaPermitidaOperacao(last)?last:'pedidos');else if(last&&el('page-'+last))page(last);supabaseInicializar();document.body.classList.remove('booting');document.body.classList.add('boot-ready')}
-  return{init,page,renderAll,alternarCamposReserva,toggleItem,setQtdItem,setPorcaoItem,adicionarPratoPedido,carregarPratoPedido,atualizarPratoPedido,removerPratoPedido,finalizarPedido,limparPedido,iniciarReserva,atualizarStatus,confirmarPagamento,registrarPagamento,atualizarResumoPagamento,excluirPedido,confirmarExcluirPedido,escolherIcone,salvarItem,editarItem,limparFormItem,alternarDisponibilidadeItem,removerItem,salvarCliente,editarCliente,limparCliente,removerCliente,aprovarClientePendente,reprovarClientePendente,buscarCep,salvarMovimentacao,removerMovimentacao,salvarConfig,verPedido,fecharModal,exportarBackup,importarBackup,buscarClientesPedido,selecionarClientePedido,carregarImagemMarketing,salvarMarketing,editarMarketing,limparMarketing,removerMarketing,salvarFavoritoPedido,alternarModoOperacao,adicionarMural,concluirMural,removerMural,fecharCaixa,registrarFechamento,logoutAdmin,restaurarUltimoSeguro,limparLogs,salvarCompra,editarCompra,limparCompra,removerCompra,adicionarInsumoReceita,removerInsumoReceita,salvarReceita,editarReceita,removerReceita,limparReceita,registrarProducao,renderProducao,renderRelatorios,imprimirRelatorio,atualizarInsightsSupabase,salvarOnlineReady,prepararIdsOnline,salvarCupom,editarCupom,limparCupomForm,removerCupom,renderAssistentePorcoes,salvarAssistentePorcoes,toggleAssistentePorcoes,fecharAvisoLojaFechada,mostrarAvisoLojaFechada,aplicarCupomPortal,aplicarCupomPedidoInterno,usarFavorito,removerFavorito,abrirEditarDadosPedido,salvarDadosPedido,editarPedido,renderPortalCliente,scrollPortalTo,scrollPortalToCategory,irParaCheckoutPortal,sincronizarTelefonePortal,togglePortalItem,setPortalQtd,setPortalPorcao,adicionarPratoPortal,removerPratoPortal,limparPortalCliente,criarPedidoPortal,copiarMensagemPortal,confirmarPedidoPortal,buscarClientePortal,selecionarClientePortalOnline,repetirUltimoPedidoPortal}
+  return{init,page,renderAll,alternarCamposReserva,toggleItem,setQtdItem,setPorcaoItem,adicionarPratoPedido,carregarPratoPedido,atualizarPratoPedido,removerPratoPedido,finalizarPedido,limparPedido,iniciarReserva,atualizarStatus,confirmarPagamento,registrarPagamento,atualizarResumoPagamento,excluirPedido,confirmarExcluirPedido,escolherIcone,salvarItem,editarItem,limparFormItem,alternarDisponibilidadeItem,removerItem,salvarCliente,editarCliente,limparCliente,removerCliente,aprovarClientePendente,reprovarClientePendente,buscarCep,salvarMovimentacao,removerMovimentacao,salvarConfig,verPedido,fecharModal,exportarBackup,importarBackup,buscarClientesPedido,selecionarClientePedido,carregarImagemMarketing,salvarMarketing,editarMarketing,limparMarketing,removerMarketing,salvarFavoritoPedido,alternarModoOperacao,adicionarMural,concluirMural,removerMural,fecharCaixa,registrarFechamento,logoutAdmin,restaurarUltimoSeguro,limparLogs,salvarCompra,editarCompra,limparCompra,removerCompra,adicionarInsumoReceita,removerInsumoReceita,salvarReceita,editarReceita,removerReceita,limparReceita,registrarProducao,renderProducao,renderPratoFeitoForm,carregarImagemPratoFeito,salvarPratoFeito,editarPratoFeito,limparPratoFeito,removerPratoFeito,alternarPratoFeitoAtivo,alternarAbaPratosFeitos,renderRelatorios,imprimirRelatorio,atualizarInsightsSupabase,salvarOnlineReady,prepararIdsOnline,salvarCupom,editarCupom,limparCupomForm,removerCupom,renderAssistentePorcoes,salvarAssistentePorcoes,toggleAssistentePorcoes,fecharAvisoLojaFechada,mostrarAvisoLojaFechada,aplicarCupomPortal,aplicarCupomPedidoInterno,usarFavorito,removerFavorito,abrirEditarDadosPedido,salvarDadosPedido,editarPedido,renderPortalCliente,mudarModoPortal,iniciarPratoFeito,toggleItemPratoFeito,confirmarPratoFeitoEditavel,cancelarPratoFeito,scrollPortalTo,scrollPortalToCategory,irParaCheckoutPortal,sincronizarTelefonePortal,togglePortalItem,setPortalQtd,setPortalPorcao,adicionarPratoPortal,removerPratoPortal,limparPortalCliente,criarPedidoPortal,copiarMensagemPortal,confirmarPedidoPortal,buscarClientePortal,selecionarClientePortalOnline,repetirUltimoPedidoPortal}
 })();
 document.addEventListener('DOMContentLoaded',App.init);

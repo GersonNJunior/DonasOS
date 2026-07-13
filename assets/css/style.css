@@ -450,3 +450,36 @@ body.perfil-operacao #page-cozinha .kitchen-ticket{border-color:#d7b58f}
 @media(max-width:700px){.reservation-card{grid-template-columns:1fr}.reservation-time{text-align:left;padding:10px 14px}}
 
 .plate-chip{cursor:pointer}.plate-chip:hover{border-color:#9f6f42;box-shadow:0 2px 8px rgba(74,24,34,.10)}.plate-chip.editing-plate{outline:3px solid rgba(31,122,73,.22);border-color:var(--green);background:#f3fbf6}.editing-plate-label{font-weight:900;color:var(--green);padding:8px 10px;margin:-2px -2px 8px;border-radius:12px;background:#edf8f1}
+
+/* Pratos feitos */
+.prato-feito-admin{margin-top:18px}.prato-feito-preview{min-height:90px;border:1px dashed #d7b48c;border-radius:14px;display:flex;align-items:center;justify-content:center;overflow:hidden}.prato-feito-preview img{width:100%;max-height:220px;object-fit:cover}.pf-rule-box{border:1px solid #ead2b7;border-radius:14px;padding:12px;margin-bottom:10px;background:#fffaf4}.pf-rule-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}.pf-rule-head label{font-size:12px}.pf-limit{width:70px!important;padding:7px!important;margin-left:6px}.pf-check-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.pf-admin-item>img{width:76px;height:76px;object-fit:cover;border-radius:12px}.online-menu-card.active-mode{outline:3px solid rgba(135,36,47,.18);transform:translateY(-2px)}.pf-store-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.pf-store-card{background:#fff;border:1px solid #ead2b7;border-radius:18px;overflow:hidden;box-shadow:0 8px 24px rgba(73,32,20,.08)}.pf-store-card>img,.pf-placeholder{width:100%;height:180px;object-fit:cover}.pf-placeholder{display:flex;align-items:center;justify-content:center;font-size:60px;background:#fff4e6}.pf-store-card>div{padding:14px;display:flex;flex-direction:column;gap:7px}.pf-store-card p{margin:0;min-height:40px}.pf-store-card b{font-size:20px;color:#87242f}.pf-configurator{margin-top:18px;padding:16px;border:2px solid #d49a42;border-radius:18px;background:#fffaf4}.pf-choice-group{margin:14px 0}.pf-choice-group>.portal-grid{margin-top:8px}.pf-configurator button.option{width:100%;text-align:center}.hidden{display:none!important}@media(max-width:700px){.pf-store-grid,.pf-check-grid{grid-template-columns:1fr}.pf-store-card>img,.pf-placeholder{height:155px}.pf-rule-head{align-items:flex-start;flex-direction:column}}
+
+/* Pratos feitos 1.1.15.2 */
+.prato-feito-preview{height:220px;min-height:220px;background:#fffaf4}
+.prato-feito-preview img{display:block;width:100%;height:100%;max-height:none;object-fit:contain;object-position:center}
+.pf-admin-item>img{width:76px;height:76px;object-fit:cover;object-position:center}
+.pf-store-image,.pf-placeholder{width:100%;height:180px;overflow:hidden;background:#fff4e6}
+.pf-store-image img{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
+.pf-description{white-space:pre-line;overflow-wrap:anywhere}
+@media(max-width:700px){.pf-store-image,.pf-placeholder{height:155px}}
+
+/* 1.1.15.3 — cards de pratos feitos sem corte */
+.pf-store-card > .pf-store-image,
+.pf-store-card > .pf-placeholder{padding:0;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+.pf-store-card > .pf-store-image{height:210px;background:#fffaf4;overflow:hidden}
+.pf-store-card > .pf-store-image img{width:100%;height:100%;display:block;object-fit:contain!important;object-position:center}
+.pf-store-card > .pf-store-body{padding:14px;display:flex;flex-direction:column;gap:7px}
+.pf-store-card > .pf-store-body .pf-description{white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:700px){.pf-store-card > .pf-store-image,.pf-store-card > .pf-placeholder{height:190px}}
+
+.pf-combo-unit{border:2px solid var(--border,#e6e0d8);border-radius:16px;padding:14px;margin:0 0 18px;background:rgba(255,255,255,.55)}
+.pf-combo-unit-head{margin-bottom:10px}.pf-combo-unit-head h4{margin:0 0 8px}.pf-combo-store-unit{border:1px solid var(--border,#e6e0d8);border-radius:14px;padding:12px;margin:12px 0}.pf-combo-store-unit>h4{margin-top:0}
+
+/* 1.1.15.7 — organização de combos na produção */
+.combo-order-unit{margin-top:10px;padding:10px 12px;border:1px solid rgba(0,0,0,.10);border-radius:10px;background:rgba(255,255,255,.55)}
+.combo-order-unit>strong{display:block;margin-bottom:7px;font-size:.95rem}
+.combo-order-unit .plate-section{margin-top:6px}
+
+.combo-unit-title{font-size:.92rem;font-weight:600;color:#333;margin:8px 0 6px}
+.combo-divider{border:none;border-top:1px solid #e6d8c9;margin:10px 0}
+.combo-order-unit strong{display:none}

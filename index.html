@@ -44,7 +44,7 @@
           <summary>📦 Gestão</summary>
           <button data-page="estoque">📦 Estoque</button>
           <button data-page="compras">🛒 Compras</button>
-          <button data-page="producao">🏭 Produção</button>
+          <button data-page="producao">🍽️ Pratos Feitos</button>
         </details>
         <details class="nav-group">
           <summary>💰 Administração</summary>
@@ -341,35 +341,30 @@
 
       <section id="page-producao" class="page">
         <div class="home-hero compact status-hero">
-          <p class="eyebrow">Estoque Pro</p>
-          <h2>Produção e ficha técnica</h2>
-          <p class="muted">Cadastre receitas-base, como molho branco, e registre a produção. O Donas OS desconta os insumos e adiciona o produto pronto ao estoque.</p>
+          <p class="eyebrow">Cardápio</p>
+          <h2>Gestão de Pratos e Combos</h2>
+          <p class="muted">Cadastre pratos individuais ou combos com vários pratos, cada um com ingredientes fixos ou opções próprias de escolha.</p><div class="row pf-global-control"><span id="statusAbaPratosFeitos" class="pill green">Aba ativa</span><button id="alternarAbaPratosFeitosBtn" class="secondary" onclick="App.alternarAbaPratosFeitos()">Ocultar aba Pratos Feitos da loja</button></div>
         </div>
-        <div class="grid2">
-          <div class="card">
-            <h3 id="formReceitaTitulo">Cadastrar ficha técnica</h3>
-            <input type="hidden" id="receitaId">
-            <div class="field"><label>Produto produzido</label><select id="receitaProduto"></select><small class="hint">Ex.: Molho Branco. Se ainda não existir, cadastre o item no Estoque primeiro.</small></div>
-            <div class="row"><div class="field"><label>Rendimento da receita</label><input id="receitaRendimento" type="number" step="0.01" placeholder="Ex: 10"></div><div class="field"><label>Unidade</label><select id="receitaUnidade"><option>L</option><option>ml</option><option>kg</option><option>g</option><option>un</option></select></div></div>
-            <div class="divider"></div>
-            <h4>Insumos da receita</h4>
-            <div class="row"><div class="field"><label>Insumo</label><select id="receitaInsumo"></select></div><div class="field"><label>Quantidade usada</label><input id="receitaInsumoQtd" type="number" step="0.01" placeholder="Ex: 8"></div></div>
-            <button class="secondary full" onclick="App.adicionarInsumoReceita()">Adicionar insumo à ficha</button>
-            <div id="receitaInsumosTemp" class="recipe-preview"></div>
-            <button class="primary full" onclick="App.salvarReceita()">Salvar ficha técnica</button>
-            <button class="secondary full" onclick="App.limparReceita()">Nova ficha</button>
+        <div class="card prato-feito-admin">
+          <h3 id="pratoFeitoFormTitulo">Cadastrar prato ou combo</h3>
+          <p class="muted">Crie opções que aparecerão no botão <strong>Pratos e Combos</strong> da loja. O preço é fechado e o cliente só poderá escolher dentro das regras definidas aqui.</p>
+          <input type="hidden" id="pratoFeitoId">
+          <div class="grid2">
+            <div>
+              <div class="field"><label>Nome do prato</label><input id="pratoFeitoNome" placeholder="Ex: Penne à bolonhesa"></div>
+              <div class="field"><label>Descrição</label><textarea id="pratoFeitoDescricao" placeholder="Ex: Penne, molho tradicional e carne moída"></textarea></div>
+              <div class="row"><div class="field"><label>Preço fechado</label><input id="pratoFeitoPreco" type="number" step="0.01" placeholder="Ex: 18,00"></div><div class="field"><label>Quantidade de pratos incluídos</label><input id="pratoFeitoQuantidade" type="number" min="1" max="10" step="1" value="1" onchange="App.renderPratoFeitoForm()"></div></div>
+              <div class="field"><label>Imagem do prato</label><input id="pratoFeitoImagemArquivo" type="file" accept="image/*" onchange="App.carregarImagemPratoFeito(event)"><input id="pratoFeitoImagem" type="hidden"><div id="pratoFeitoImagemPreview" class="prato-feito-preview muted">Nenhuma imagem selecionada.</div></div>
+              <label class="check-line"><input id="pratoFeitoAtivo" type="checkbox" checked> Disponível na loja</label>
+            </div>
+            <div>
+              <h4>Ingredientes e limites</h4>
+              <p class="muted" id="pratoFeitoRegraAjuda">Marque os ingredientes que fazem parte do prato. O cliente não poderá alterá-los.</p>
+              <div id="pratoFeitoCategorias"></div>
+            </div>
           </div>
-          <div class="card">
-            <h3>Registrar produção</h3>
-            <div class="field"><label>Ficha técnica</label><select id="producaoReceita" onchange="App.renderProducao()"></select></div>
-            <div class="field"><label>Quantidade de receitas produzidas</label><input id="producaoQtd" type="number" step="0.5" placeholder="Ex: 1, 0.5 ou 2"><small class="hint">Se a ficha rende 1,5 L, digite 1 para uma receita inteira.</small></div>
-            <button class="primary full" onclick="App.registrarProducao()">Registrar produção</button>
-            <div id="previewProducao" class="production-preview"></div>
-          </div>
-        </div>
-        <div class="grid2">
-          <div class="card"><h3>Fichas técnicas cadastradas</h3><div id="listaReceitas"></div></div>
-          <div class="card"><h3>Histórico de produção</h3><div id="listaProducoes"></div></div>
+          <div class="row"><button class="primary full" onclick="App.salvarPratoFeito()">Salvar prato ou combo</button><button class="secondary full" onclick="App.limparPratoFeito()">Novo cadastro</button></div>
+          <div class="divider"></div><h3>Pratos e combos cadastrados</h3><div id="listaPratosFeitos"></div>
         </div>
       </section>
 
@@ -572,8 +567,8 @@
                 
               </div>
               <div class="online-hero-actions">
-                <button class="online-primary" onclick="App.scrollPortalToCategory('Massa')">Montar meu prato</button>
-                <button class="online-secondary" onclick="App.scrollPortalTo('portalItens')">Ver cardápio</button>
+                <button class="online-primary" onclick="App.mudarModoPortal('montar')">Monte seu prato</button>
+                <button class="online-secondary" onclick="App.mudarModoPortal('feitos')">Pratos feitos</button>
               </div>
             </div>
           </div>
@@ -581,8 +576,8 @@
           <div id="portalMarketing" class="online-campaign-zone"></div>
 
           <div class="online-quick-cards" id="portalMenuAnchor">
-            <button class="online-menu-card pasta" onclick="App.scrollPortalToCategory('Massa')"><span>🍝</span><strong>Monte seu prato</strong><small>Escolha massa, molho e ingredientes</small></button>
-            <button id="onlinePratosProntosBtn" class="online-menu-card hidden" onclick="App.scrollPortalToCategory('Prato Pronto')"><span>🍽️</span><strong>Pratos prontos</strong><small>Escolha uma sugestão pronta da casa</small></button>
+            <button id="portalModoMontarBtn" class="online-menu-card pasta active-mode" onclick="App.mudarModoPortal('montar')"><span>🍝</span><strong>Monte seu prato</strong><small>Escolha massa, molho e ingredientes</small></button>
+            <button id="portalModoFeitosBtn" class="online-menu-card" onclick="App.mudarModoPortal('feitos')"><span>🍽️</span><strong>Pratos e Combos</strong><small>Opções com preço e regras definidas</small></button>
             <button id="onlineSobremesasBtn" class="online-menu-card hidden" onclick="App.scrollPortalToCategory('Sobremesa')"><span>🍰</span><strong>Sobremesas</strong><small>Complete seu pedido</small></button>
           </div>
 
@@ -607,6 +602,7 @@
                 <p>Itens esgotados aparecem bloqueados. Proteínas e complementos grátis são calculados por prato.</p>
               </div>
               <div id="portalItens" class="online-menu-list"></div>
+              <div id="portalPratosFeitos" class="online-menu-list hidden"></div>
             </div>
             <aside id="portalCarrinho" class="online-cart-card">
               <div class="online-section-head">
