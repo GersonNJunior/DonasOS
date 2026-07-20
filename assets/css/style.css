@@ -483,3 +483,17 @@ body.perfil-operacao #page-cozinha .kitchen-ticket{border-color:#d7b58f}
 .combo-unit-title{font-size:.92rem;font-weight:600;color:#333;margin:8px 0 6px}
 .combo-divider{border:none;border-top:1px solid #e6d8c9;margin:10px 0}
 .combo-order-unit strong{display:none}
+
+/* Frete automático por distância */
+.delivery-config-box{border:1px solid var(--line,#ddd);border-radius:16px;padding:16px;margin:14px 0;background:rgba(255,255,255,.55)}
+.delivery-config-box h4{margin:0 0 12px}.delivery-origin-status,.delivery-calc-status{padding:10px 12px;border-radius:10px;background:#f4f4f4;font-size:.9rem;margin-top:8px}
+.delivery-origin-status.ok,.delivery-calc-status.ok{background:#e8f7ed}.delivery-origin-status.alert,.delivery-calc-status.alert{background:#fff1ec}
+.delivery-ranges{display:grid;gap:8px;margin:12px 0}.delivery-range-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;padding:10px;border:1px solid var(--line,#ddd);border-radius:12px}
+.delivery-range-row .field{margin:0}.delivery-range-row button{height:42px}.delivery-loading{opacity:.75}
+@media(max-width:700px){.delivery-range-row{grid-template-columns:1fr 1fr}.delivery-range-row button{grid-column:1/-1}}
+
+.delivery-origin-map-box{margin:14px 0;padding:12px;border:1px solid #ead8c8;border-radius:14px;background:#fffaf5}.delivery-origin-map-head{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}.delivery-origin-map-head span{font-size:.85rem;color:#6f665f}.delivery-origin-map{height:330px;width:100%;border-radius:12px;overflow:hidden;border:1px solid #ded7d0;margin-bottom:10px}.delivery-origin-map-box .row{align-items:center;justify-content:flex-end}.delivery-origin-map-box.hidden{display:none!important}@media(max-width:700px){.delivery-origin-map{height:280px}.delivery-origin-map-box .row{flex-direction:column}.delivery-origin-map-box .row button{width:100%}}
+
+/* Parte 3 - acessos simples da loja */
+.access-stats .access-online strong{display:flex;align-items:center;gap:10px}.access-stats .access-online strong::before{content:"";width:11px;height:11px;border-radius:50%;background:#2e9d50;box-shadow:0 0 0 5px rgba(46,157,80,.12)}
+.access-daily-list{display:grid;gap:8px}.access-day-row{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;border:1px solid rgba(123,46,46,.12);border-radius:12px;background:#fffaf4}.access-day-row strong{font-size:18px}.access-status{margin-top:14px}.access-status.error{color:#b42318}.offline-reservation-note{display:block;margin-top:4px;font-size:.88em;opacity:.9}
