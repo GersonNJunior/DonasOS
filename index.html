@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="assets/css/style.css" />
 
   <style>
@@ -43,7 +44,6 @@
         <details class="nav-group" open>
           <summary>📦 Gestão</summary>
           <button data-page="estoque">📦 Estoque</button>
-          <button data-page="compras">🛒 Compras</button>
           <button data-page="producao">🍽️ Pratos Feitos</button>
         </details>
         <details class="nav-group">
@@ -54,6 +54,7 @@
           <button data-page="insights">📊 Insights</button>
           <button data-page="relatorios">📑 Relatórios</button>
           <button data-page="online">🌐 Online Ready</button>
+          <button data-page="acessos">👁️ Acessos</button>
           <button data-page="portal">🍝 Donas Online</button>
           <button data-page="config">⚙️ Configurações</button>
         </details>
@@ -111,9 +112,9 @@
               <div class="field"><label>Complemento</label><input id="pedidoComplemento" placeholder="Apto, bloco, referência"></div>
               <div class="row"><div class="field"><label>Bairro</label><input id="pedidoBairro" placeholder="Bairro"></div><div class="field"><label>Cidade</label><input id="pedidoCidade" placeholder="Cidade"></div></div>
               <div class="field"><label>UF</label><input id="pedidoUf" placeholder="SP" maxlength="2"></div>
-              <input id="enderecoPedido" type="hidden"><input id="bairroPedido" type="hidden">
+              <input id="enderecoPedido" type="hidden"><input id="bairroPedido" type="hidden"><div id="pedidoFreteStatus" class="delivery-calc-status">Preencha o endereço para calcular o frete.</div>
             </div>
-            <div class="field"><label>Forma de pagamento prevista</label><select id="pagamentoPedido"><option>PIX</option><option>Dinheiro</option><option>Débito (aproximação)</option><option>Crédito (aproximação)</option></select><small class="hint">Use para separar maquininha ou orientar o caixa.</small></div><div class="field"><label>Pagamento recebido?</label><select id="pagamentoRecebidoPedido"><option value="nao">Não, receber na entrega/retirada</option><option value="sim">Sim, já foi pago</option></select><small class="hint">Se marcar como pago, a receita entra no financeiro imediatamente.</small></div>
+            <div class="field"><label>Forma de pagamento prevista</label><select id="pagamentoPedido" onchange="App.alternarCamposTroco('pedido')"><option>PIX</option><option>Dinheiro</option><option>Débito (aproximação)</option><option>Crédito (aproximação)</option></select><small class="hint">Use para separar maquininha ou orientar o caixa.</small></div><div id="pedidoTrocoBox" class="field hidden"><label>Troco para quanto?</label><input id="pedidoTrocoPara" type="number" min="0" step="0.01" placeholder="Deixe vazio se não precisar de troco"><small class="hint">Exemplo: para um pedido de R$ 32,00, informe 50 se o cliente pagar com R$ 50,00.</small></div><div class="field"><label>Pagamento recebido?</label><select id="pagamentoRecebidoPedido"><option value="nao">Não, receber na entrega/retirada</option><option value="sim">Sim, já foi pago</option></select><small class="hint">Se marcar como pago, a receita entra no financeiro imediatamente.</small></div>
             <div id="pratosPedido" class="plate-box hidden"></div>
             <div id="resumoPedido" class="summary empty-summary">Selecione os itens do prato ou adicione bebidas/sobremesas avulsas</div>
             <button id="btnAdicionarPrato" class="secondary full" onclick="App.adicionarPratoPedido()">Adicionar prato ao pedido</button>
@@ -180,12 +181,7 @@
           </div>
         </div>
 
-        <div class="grid2">
-          <div class="card"><h3>Últimos pedidos</h3><div id="ultimosPedidos"></div></div>
-          <div class="card"><h3>Mais utilizados</h3><div id="rankingItens"></div></div>
-        </div>
-        <div class="card"><h3>Alertas de estoque</h3><div id="alertasEstoque"></div></div>
-        <div class="card"><h3>Inteligência do dia</h3><div id="insightsDia"></div></div>
+        <div class="card"><h3>Últimos pedidos</h3><div id="ultimosPedidos"></div></div>
       </section>
 
       <section id="page-operacao" class="page">
@@ -312,33 +308,6 @@
         </div>
       </section>
 
-
-      <section id="page-compras" class="page">
-        <div class="home-hero compact status-hero">
-          <p class="eyebrow">Estoque Pro</p>
-          <h2>Compras e insumos</h2>
-          <p class="muted">Registre compras de mercado, acompanhe preço por kg/L/unidade e envie para o estoque quando fizer sentido. Ideal para itens de venda e também insumos de produção, como leite, manteiga e farinha.</p>
-        </div>
-        <div class="grid2">
-          <div class="card">
-            <h3 id="formCompraTitulo">Lançar compra</h3>
-            <input type="hidden" id="compraId">
-            <div class="field"><label>Produto comprado</label><input id="compraProduto" placeholder="Ex: Leite integral"></div>
-            <div class="row"><div class="field"><label>Mercado / local</label><input id="compraLocal" placeholder="Ex: Atacadão, Assaí, Mercado do bairro"></div><div class="field"><label>Data</label><input id="compraData" type="date"></div></div>
-            <div class="row"><div class="field"><label>Quantidade comprada</label><input id="compraQtd" type="number" step="0.01" placeholder="Ex: 2"></div><div class="field"><label>Unidade comprada</label><select id="compraUnidade"><option>un</option><option>kg</option><option>g</option><option>L</option><option>ml</option><option>cx</option></select><small class="hint">Pode comprar em kg/L; o Donas OS converte para a unidade do item no estoque.</small></div></div>
-            <div class="row"><div class="field"><label>Valor total</label><input id="compraValor" type="number" step="0.01" placeholder="Ex: 49.90"></div><div class="field"><label>Categoria para estoque</label><select id="compraCategoria"><option>Insumo</option><option>Massa</option><option>Molho</option><option>Proteína</option><option>Complemento</option><option>Finalização</option><option>Bebida</option><option>Sobremesa</option><option>Embalagem</option></select></div></div>
-            <div class="field"><label>Item de estoque relacionado</label><select id="compraItemEstoque"><option value="">Criar novo / não vincular agora</option></select><small class="hint">Se escolher um item existente, a compra pode ser somada ao estoque dele. Insumos não aparecem no montar pedido.</small></div>
-            <label class="check-line"><input id="compraAddEstoque" type="checkbox" checked> Adicionar quantidade ao estoque</label>
-            <label class="check-line"><input id="compraFinanceiro" type="checkbox" checked> Lançar como saída no financeiro</label>
-            <div class="field"><label>Observação</label><textarea id="compraObs" placeholder="Ex: promoção, validade, marca, compra para molho branco"></textarea></div>
-            <button class="primary full" onclick="App.salvarCompra()">Salvar compra</button>
-            <button class="secondary full" onclick="App.limparCompra()">Nova compra</button>
-          </div>
-          <div class="card"><h3>Resumo de compras</h3><div id="resumoCompras"></div><h3 style="margin-top:18px">Histórico de compras</h3><div class="filter-row"><input id="buscaCompra" oninput="App.renderAll()" placeholder="Buscar produto, mercado ou observação"><select id="filtroCompraCategoria" onchange="App.renderAll()"><option value="">Todas as categorias</option></select></div><div id="listaCompras"></div></div>
-        </div>
-      </section>
-
-
       <section id="page-producao" class="page">
         <div class="home-hero compact status-hero">
           <p class="eyebrow">Cardápio</p>
@@ -412,22 +381,10 @@
           <div class="card intelligence-card"><h3>Meta e previsão do dia</h3><div id="insMetaSprint"></div></div>
           <div class="card intelligence-card"><h3>Formas de pagamento</h3><div id="insPagamentoSprint"></div></div>
         </div>
-        <div class="grid2">
-          <div class="card"><h3>Campeões do cardápio</h3><div id="insRankingCategorias"></div></div>
-          <div class="card"><h3>Consumo de ingredientes</h3><div id="insConsumoItens"></div></div>
-        </div>
-        <div class="grid2">
-          <div class="card"><h3>Clientes</h3><div id="insClientesSprint"></div></div>
-          <div class="card"><h3>Tempo médio operacional</h3><div id="insTempoSprint"></div></div>
-        </div>
-        <div class="grid2">
-          <div class="card"><h3>Tendências e conquistas</h3><div id="insTendenciaSprint"></div><div id="insConquistasSprint" style="margin-top:12px"></div></div>
-          <div class="card"><h3>Compras inteligentes</h3><div id="insCompras"></div></div>
-        </div>
-        <div class="grid2">
-          <div class="card"><h3>Alertas e sugestões</h3><div id="insAlertas"></div></div>
-          <div class="card"><h3>Horário de pico</h3><div id="insHorarios"></div></div>
-        </div>
+        <div class="card"><h3>Campeões do cardápio</h3><div id="insRankingCategorias"></div></div>
+        <div class="card"><h3>Clientes</h3><div id="insClientesSprint"></div></div>
+        <div class="card"><h3>Tendências e conquistas</h3><div id="insTendenciaSprint"></div><div id="insConquistasSprint" style="margin-top:12px"></div></div>
+        <div class="card"><h3>Horário de pico</h3><div id="insHorarios"></div></div>
         <div class="grid2">
           <div class="card"><h3>Clientes para reativar</h3><div id="insClientes"></div></div>
         </div>
@@ -626,9 +583,9 @@
               <div>
                 <div class="field"><label>WhatsApp *</label><input id="portalTelefoneFinal" placeholder="WhatsApp com DDD" oninput="App.sincronizarTelefonePortal('final')" required></div>
                 <div class="field"><label>Nome *</label><input id="portalCliente" placeholder="Nome do cliente" required></div>
-                <div class="row"><div class="field"><label>Tipo</label><select id="portalTipo" onchange="App.renderPortalCliente()"><option>Retirada</option><option>Delivery</option></select></div><div class="field"><label>Pagamento combinado</label><select id="portalPagamento"><option>PIX</option><option>Dinheiro</option><option>Débito (aproximação)</option><option>Crédito (aproximação)</option></select></div></div>
+                <div class="row"><div class="field"><label>Tipo</label><select id="portalTipo" onchange="App.renderPortalCliente()"><option>Retirada</option><option>Delivery</option></select></div><div class="field"><label>Pagamento combinado</label><select id="portalPagamento" onchange="App.alternarCamposTroco('portal')"><option>PIX</option><option>Dinheiro</option><option>Débito (aproximação)</option><option>Crédito (aproximação)</option></select></div></div><div id="portalTrocoBox" class="field hidden"><label>Precisa de troco? Informe para quanto</label><input id="portalTrocoPara" type="number" min="0" step="0.01" placeholder="Deixe vazio se não precisar"><small class="hint">Exemplo: informe 50 para receber troco de R$ 50,00.</small></div>
                 <div class="field"><label>Deseja talher?</label><select id="portalTalher"><option value="Não">Não</option><option value="Sim">Sim</option></select><small class="hint">Ajuda a evitar desperdício e organizar a entrega.</small></div>
-                <div id="portalEnderecoBox" class="hidden"><div class="field"><label>CEP <span class="muted">(opcional)</span></label><input id="portalCep" placeholder="Digite o CEP, se souber" inputmode="numeric" maxlength="9" onblur="App.buscarCep('portal')"><small class="hint">O CEP ajuda a preencher o endereço, mas não é obrigatório.</small></div><div class="row"><div class="field"><label>Rua *</label><input id="portalRua" placeholder="Rua / Avenida"></div><div class="field"><label>Número *</label><input id="portalNumero" placeholder="Nº"></div></div><div class="field"><label>Complemento</label><input id="portalComplemento" placeholder="Apto, bloco, referência"></div><div class="row"><div class="field"><label>Bairro *</label><input id="portalBairro" placeholder="Bairro"></div><div class="field"><label>Cidade</label><input id="portalCidade" placeholder="Cidade"></div></div><div class="field"><label>UF</label><input id="portalUf" placeholder="SP" maxlength="2"></div><input id="portalEndereco" type="hidden"><label class="check-line"><input id="portalConfirmaEndereco" type="checkbox"> Confirmo que este é o endereço correto para a entrega deste pedido.</label></div>
+                <div id="portalEnderecoBox" class="hidden"><div class="field"><label>CEP <span class="muted">(opcional)</span></label><input id="portalCep" placeholder="Digite o CEP, se souber" inputmode="numeric" maxlength="9" onblur="App.buscarCep('portal')"><small class="hint">O CEP ajuda a preencher o endereço, mas não é obrigatório.</small></div><div class="row"><div class="field"><label>Rua *</label><input id="portalRua" placeholder="Rua / Avenida"></div><div class="field"><label>Número *</label><input id="portalNumero" placeholder="Nº"></div></div><div class="field"><label>Complemento</label><input id="portalComplemento" placeholder="Apto, bloco, referência"></div><div class="row"><div class="field"><label>Bairro *</label><input id="portalBairro" placeholder="Bairro"></div><div class="field"><label>Cidade</label><input id="portalCidade" placeholder="Cidade"></div></div><div class="field"><label>UF</label><input id="portalUf" placeholder="SP" maxlength="2"></div><input id="portalEndereco" type="hidden"><div id="portalFreteStatus" class="delivery-calc-status">Preencha o endereço para calcular o frete.</div><label class="check-line"><input id="portalConfirmaEndereco" type="checkbox"> Confirmo que este é o endereço correto para a entrega deste pedido.</label></div>
                 <div class="field"><label>Cupom</label><div class="coupon-row"><input id="portalCupom" placeholder="Digite seu cupom, se tiver"><button type="button" class="secondary mini" onclick="App.aplicarCupomPortal()">Aplicar</button></div></div><div class="field"><label>Observação</label><textarea id="portalObs" placeholder="Ex: sem cebola, entregar no portão..."></textarea></div>
               </div>
               <div class="online-confirm-box">
@@ -656,6 +613,27 @@
         </div>
       </section>
 
+      <section id="page-acessos" class="page">
+        <div class="home-hero compact status-hero">
+          <div>
+            <p class="eyebrow">Loja Online</p>
+            <h2>Acessos da página</h2>
+            <p class="muted">Acompanhamento simples, sem identificar clientes e sem registrar cliques ou páginas visitadas.</p>
+          </div>
+          <button class="secondary" onclick="App.atualizarPainelAcessos(true)">Atualizar</button>
+        </div>
+        <div class="stats-grid access-stats">
+          <article class="stat access-online"><span>Agora na loja</span><strong id="acessosOnline">0</strong><small>pessoa(s) conectada(s)</small></article>
+          <article class="stat"><span>Acessos hoje</span><strong id="acessosHoje">0</strong><small>aberturas da loja</small></article>
+          <article class="stat"><span>Acessos ontem</span><strong id="acessosOntem">0</strong><small>aberturas da loja</small></article>
+          <article class="stat"><span>Últimos 7 dias</span><strong id="acessosSeteDias">0</strong><small>aberturas da loja</small></article>
+        </div>
+        <div class="grid2">
+          <div class="card"><h3>Resumo diário</h3><div id="acessosResumoDiario" class="access-daily-list"><p class="muted">Carregando acessos...</p></div></div>
+          <div class="card"><h3>Como funciona</h3><div class="db-box">O contador <strong>Agora na loja</strong> mostra somente quantos navegadores estão com o cardápio aberto neste momento.<br><br>O histórico registra apenas uma abertura da loja por sessão do navegador. Nenhum nome, telefone, endereço ou clique é armazenado.</div><p id="acessosStatus" class="muted access-status">Aguardando sincronização.</p></div>
+        </div>
+      </section>
+
       <section id="page-config" class="page">
         <div class="grid2">
           <div class="card"><h3>Configurações da empresa</h3>
@@ -664,9 +642,26 @@
             <div class="row"><div class="field"><label>CNPJ</label><input id="cfgCnpj" placeholder="opcional"></div><div class="field"><label>E-mail</label><input id="cfgEmail" placeholder="opcional"></div></div>
             <div class="field"><label>Endereço da empresa</label><input id="cfgEnderecoEmpresa" placeholder="opcional"></div>
             <div class="field"><label>Instagram</label><input id="cfgInstagram"></div>
-            <div class="field"><label>PIX</label><input id="cfgPix"></div>
+            <div class="payment-message-config"><h4>Mensagem de pagamento</h4>
+            <div class="field"><label>Chave PIX</label><input id="cfgPix" placeholder="Chave aleatória, telefone, e-mail ou CPF"><small class="hint">A chave será copiada separadamente pelo botão do pedido.</small></div>
+            <div class="field"><label>Texto para copiar</label><textarea id="cfgMensagemPagamento" rows="7" placeholder="Mensagem enviada ao cliente"></textarea><small class="hint">Campos automáticos disponíveis: {cliente}, {pedido}, {valor}, {pagamento} e {detalhes_pagamento}. A chave PIX não será incluída nesse texto.</small></div>
+            </div>
             <div class="field"><label>WhatsApp da loja</label><input id="cfgWhatsapp" placeholder="Ex: 16997062305"><small class="hint">Use apenas números com DDD. Esse número será usado no botão do Portal Cliente.</small></div>
-            <div class="row"><div class="field"><label>Taxa entrega</label><input id="cfgTaxa" type="number" step="0.01"></div><div class="field"><label>Raio de entrega</label><input id="cfgRaioEntrega" placeholder="Ex: condomínio / 5 km"></div></div>
+            <div class="delivery-config-box">
+              <h4>Frete automático por distância</h4>
+              <div class="row"><div class="field"><label>CEP de saída</label><input id="cfgOrigemCep" placeholder="00000-000" inputmode="numeric" maxlength="9"><small class="hint">Digite o CEP do local de onde saem as entregas.</small></div><div class="field"><label>Número</label><input id="cfgOrigemNumero" placeholder="Nº"></div></div>
+              <div class="field"><label>Endereço localizado</label><input id="cfgEnderecoSaida" readonly placeholder="Será preenchido automaticamente"><small class="hint">O sistema busca rua, bairro, cidade e UF pelo CEP. Você informa apenas o número.</small></div>
+              <div class="row"><button type="button" class="secondary" onclick="App.localizarEnderecoSaida()">🔎 Buscar CEP e localizar</button><div id="cfgOrigemStatus" class="delivery-origin-status">Ainda não localizado.</div></div>
+              <div id="cfgMapaOrigemBox" class="delivery-origin-map-box hidden">
+                <div class="delivery-origin-map-head"><strong>Confirme o ponto de saída</strong><span>Arraste o marcador ou clique no local correto do mapa.</span></div>
+                <div id="cfgMapaOrigem" class="delivery-origin-map"></div>
+                <div class="row"><button type="button" class="secondary mini" onclick="App.centralizarMapaOrigem()">📍 Centralizar no ponto salvo</button><button type="button" class="primary mini" onclick="App.confirmarPontoOrigem()">Confirmar este ponto</button></div>
+              </div>
+              <div id="cfgFaixasFrete" class="delivery-ranges"></div>
+              <button type="button" class="secondary mini" onclick="App.adicionarFaixaFrete()">+ Adicionar faixa</button>
+              <div class="field"><label>Taxa fixa de segurança</label><input id="cfgTaxa" type="number" step="0.01" min="0"><small class="hint">Usada somente quando o cálculo automático estiver desativado ou indisponível.</small></div>
+              <input id="cfgRaioEntrega" type="hidden">
+            </div>
             <div class="row"><div class="field"><label>Tempo médio de preparo (min)</label><input id="cfgTempoPreparo" type="number" min="0" placeholder="Ex: 20"></div><div class="field"><label>Complementos grátis</label><input id="cfgGratis" type="number"></div></div>
             <div class="row"><div class="field"><label>Proteínas grátis</label><input id="cfgProteinasGratis" type="number" min="0" placeholder="Ex: 1"></div><div class="field"><label>Finalizações grátis</label><input id="cfgFinalizacoesGratis" type="number" min="0" placeholder="Ex: 1"></div></div><div class="row"><div class="field"><label>Meta diária</label><input id="cfgMetaDiaria" type="number" step="0.01" placeholder="Ex: 1000"></div><div class="field"><label>Senha ADM</label><div class="password-row"><input id="cfgAdminSenha" type="password" placeholder="Padrão: donas2026"><button type="button" class="password-toggle" data-toggle-password="cfgAdminSenha" aria-label="Mostrar senha">👁️</button></div></div></div><div class="row"><div class="field"><label>Senha Operação</label><div class="password-row"><input id="cfgOperacaoSenha" type="password" placeholder="Padrão: massa2026"><button type="button" class="password-toggle" data-toggle-password="cfgOperacaoSenha" aria-label="Mostrar senha">👁️</button></div><small class="hint">Perfil para uso na cozinha: Pedidos, Cozinha, Fazer Pedido, Estoque e Online Ready.</small></div><div class="field"><label>Perfil Operação</label><input value="Pedidos • Cozinha • Fazer Pedido • Estoque • Online Ready" readonly></div></div>
             <div class="field"><label>Nome interno do sistema</label><input id="cfgNomeInterno" placeholder="Donas OS"></div>
@@ -682,6 +677,8 @@
 
   <div id="modal" class="modal hidden"><div class="modal-card"><button class="modal-close" onclick="App.fecharModal()">×</button><div id="modalContent"></div></div></div>
   <div id="toast"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/js/app.js"></script>
 </body>
 </html>
