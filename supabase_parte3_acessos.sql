@@ -25,3 +25,10 @@ create policy "site_access_events_read_public"
   using (true);
 
 -- O Realtime Presence não precisa de tabela. Ele usa o canal donasos-loja-presenca.
+
+
+-- Reforço de permissões para projetos em que as políticas existem,
+-- mas a função anon ainda não recebeu privilégios da tabela/sequência.
+grant usage on schema public to anon, authenticated;
+grant select, insert on table public.site_access_events to anon, authenticated;
+grant usage, select on sequence public.site_access_events_id_seq to anon, authenticated;
