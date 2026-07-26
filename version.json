@@ -1,1 +1,4 @@
-{"version":"1.1.15.18","name":"Mensagens de pagamento e PIX separado","date":"2026-07-20"}
+{
+  "version": "1.1.15.26",
+  "name": "Correção persistência dos tamanhos"
+}
