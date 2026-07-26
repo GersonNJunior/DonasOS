@@ -237,7 +237,7 @@ const App=(()=>{
   function porcoesPedidoItem(item){const base=Math.max(tamanhoPorcaoEstoque(item),0.0001);return Math.max(1,Math.round(Number(pedido.qtd[item.id]||base)/base))}
   function porcoesPreparoItem(i){const base=encontrarItemEstoque(i)||i;return porcoesItem({...base,qtdUsada:Number(i.qtdUsada||i.quantidade||i.quantidadeUsada||tamanhoPorcaoEstoque(base))})}
   function labelPorcoesPreparo(i){const n=porcoesPreparoItem(i);return `${n} ${n===1?'porção':'porções'}`}
-  function labelItemCliente(i){const n=porcoesPreparoItem(i);return n>1?`${n}x ${i.nome}`:i.nome}
+  function labelItemCliente(i){if(String(i?.categoria||i?.tipo||'').trim().toLowerCase()==='massa')return i.nome;const n=porcoesPreparoItem(i);return n>1?`${n}x ${i.nome}`:i.nome}
 
   function chaveEstoqueItem(i){return (String(i.categoria||'').trim().toLowerCase()+'|'+String(i.nome||'').trim().toLowerCase())}
   function encontrarItemEstoque(ref){
@@ -551,10 +551,58 @@ const App=(()=>{
 
   async function removerItem(id){if(!confirm('Remover este item?'))return;const item=db.itens.find(i=>i.id===id);if(!item)return;const snapshot=deepCopy(db.itens||[]);db.itens=db.itens.filter(i=>i.id!==id);save();renderAll();const ok=await supabaseRemoverItem(item);if((supabaseLojaId||supabaseAtivo())&&ok===false){db.itens=snapshot;save();renderAll();return toast('Remoção desfeita porque o Supabase recusou a exclusão.')}await supabaseCarregarItens();renderAll();toast('Item removido do banco')}
 
-  async function salvarCliente(){const id=val('clienteId'),nome=val('cliNome').trim();if(!nome)return toast('Informe o nome');const data={nome,telefone:chaveTelefone(val('cliTelefone')),cep:val('cliCep'),rua:val('cliRua'),numero:val('cliNumero'),complemento:val('cliComplemento'),bairro:val('cliBairro'),cidade:val('cliCidade'),uf:val('cliUf'),endereco:enderecoCompleto({rua:val('cliRua'),numero:val('cliNumero'),complemento:val('cliComplemento'),endereco:val('cliEndereco')}),obs:val('cliObs'),updatedAt:new Date().toISOString()};let clienteAtual=null;if(id){const idx=db.clientes.findIndex(c=>c.id===id);if(idx>=0){db.clientes[idx]={...db.clientes[idx],...data};clienteAtual=db.clientes[idx];}}else{clienteAtual={id:uid(),createdAt:new Date().toISOString(),...data};db.clientes.push(clienteAtual);}limparCliente(false);save();await supabaseSalvarClienteAdm(clienteAtual||data);await supabaseCarregarClientesOficiais();save();toast('Cliente salvo')}
+  async function salvarCliente(){
+    const id=val('clienteId'),nome=val('cliNome').trim();
+    if(!nome)return toast('Informe o nome');
+    const data={nome,telefone:chaveTelefone(val('cliTelefone')),cep:val('cliCep'),rua:val('cliRua'),numero:val('cliNumero'),complemento:val('cliComplemento'),bairro:val('cliBairro'),cidade:val('cliCidade'),uf:val('cliUf'),endereco:enderecoCompleto({rua:val('cliRua'),numero:val('cliNumero'),complemento:val('cliComplemento'),endereco:val('cliEndereco')}),obs:val('cliObs'),updatedAt:new Date().toISOString()};
+    const snapshot=deepCopy(db.clientes||[]);
+    const anterior=id?deepCopy(db.clientes.find(c=>c.id===id)||null):null;
+    let clienteAtual=null;
+    if(id){
+      const idx=db.clientes.findIndex(c=>c.id===id);
+      if(idx>=0){db.clientes[idx]={...db.clientes[idx],...data};clienteAtual=db.clientes[idx];}
+    }else{
+      clienteAtual={id:uid(),createdAt:new Date().toISOString(),...data};db.clientes.push(clienteAtual);
+    }
+    save();renderAll();
+    const salvo=supabaseAtivo()?await supabaseSalvarClienteAdm(clienteAtual||data,anterior):clienteAtual;
+    if(supabaseAtivo()&&!salvo){db.clientes=snapshot;save();renderAll();return toast('Não foi possível salvar o cliente no banco. Confira o SQL da versão 1.1.15.30.');}
+    if(supabaseAtivo()){
+      const idx=db.clientes.findIndex(c=>c.id===id||c===clienteAtual||c.supabase_id===salvo.supabase_id);
+      if(idx>=0)db.clientes[idx]={...db.clientes[idx],...salvo};
+      await supabaseCarregarClientesOficiais();
+    }
+    limparCliente(false);save();renderAll();toast(supabaseAtivo()?'Cliente atualizado no banco':'Cliente salvo localmente');
+  }
   function editarCliente(id){const c=db.clientes.find(x=>x.id===id);if(!c)return;el('clienteId').value=c.id;el('cliNome').value=c.nome||'';el('cliTelefone').value=c.telefone||'';[['cliCep','cep'],['cliRua','rua'],['cliNumero','numero'],['cliComplemento','complemento'],['cliEndereco','endereco'],['cliBairro','bairro'],['cliCidade','cidade'],['cliUf','uf']].forEach(([id,k])=>{if(el(id))el(id).value=c[k]||''});el('cliObs').value=c.obs||'';page('clientes')}
   function limparCliente(show=true){['clienteId','cliNome','cliTelefone','cliCep','cliRua','cliNumero','cliComplemento','cliEndereco','cliBairro','cliCidade','cliUf','cliObs'].forEach(id=>{if(el(id))el(id).value=''});if(show)toast('Formulário limpo')}
-  function removerCliente(id){if(!confirm('Remover cliente?'))return;db.clientes=db.clientes.filter(c=>c.id!==id);save();toast('Cliente removido')}
+  async function removerCliente(id){
+    if(!confirm('Remover este cliente? Os pedidos existentes serão mantidos.'))return;
+    const cliente=db.clientes.find(c=>c.id===id);if(!cliente)return;
+    const snapshot=deepCopy(db.clientes||[]);
+    db.clientes=db.clientes.filter(c=>c.id!==id);save();renderAll();
+    const ok=await supabaseRemoverCliente(cliente);
+    if(supabaseAtivo()&&ok===false){db.clientes=snapshot;save();renderAll();return toast('Remoção desfeita porque o banco não confirmou a exclusão.');}
+    if(supabaseAtivo())await supabaseCarregarClientesOficiais();save();renderAll();toast(supabaseAtivo()?'Cliente removido do banco':'Cliente removido localmente');
+  }
+  async function removerRecusadosHistorico(){
+    const recusados=(db.clientesPendentes||[]).filter(c=>(c.status||'pendente')==='reprovado');
+    if(!recusados.length)return toast('Não há clientes recusados no histórico.');
+    if(!confirm(`Remover ${recusados.length} cliente(s) recusado(s) do histórico? Aprovados e pendentes serão mantidos.`))return;
+    const snapshot=deepCopy(db.clientesPendentes||[]);
+    db.clientesPendentes=(db.clientesPendentes||[]).filter(c=>(c.status||'pendente')!=='reprovado');save();renderAll();
+    try{
+      if(supabaseAtivo()){
+        const lojaId=await supabaseGetLoja();
+        await supabaseRequest('/rpc/donas_remover_clientes_recusados',{method:'POST',body:JSON.stringify({p_loja_id:lojaId})});
+        const aindaExiste=await supabaseRequest('/clientes_pendentes?select=id&loja_id=eq.'+encodeURIComponent(lojaId)+'&status=eq.reprovado&limit=1');
+        if(Array.isArray(aindaExiste)&&aindaExiste.length)throw new Error('O banco ainda retornou registros recusados');
+        await supabaseCarregarClientesPendentes();
+        db.clientesPendentes=(db.clientesPendentes||[]).filter(c=>(c.status||'pendente')!=='reprovado');
+      }
+      save();renderAll();toast('Clientes recusados removidos do histórico');
+    }catch(e){console.warn('Remover recusados do histórico:',e);db.clientesPendentes=snapshot;save();renderAll();toast('Não foi possível remover os recusados. Execute o SQL da versão 1.1.15.30.');}
+  }
   async function salvarMovimentacao(){const desc=val('movDesc').trim(),valor=num('movValor'),tipo=val('movTipo');if(!desc||!valor)return toast('Preencha descrição e valor');const mov={id:uid(),onlineId:onlineId('FIN'),desc,valor,tipo,data:new Date().toISOString(),origem:'manual'};db.financeiro.unshift(mov);log('Movimentação manual',desc+' • '+tipo+' • '+fmt(valor));['movDesc','movValor'].forEach(id=>el(id).value='');save();await supabaseSalvarMovimentacao(mov);toast('Movimentação salva')}
   async function removerMovimentacao(id){if(!confirm('Remover movimentação?'))return;const mov=(db.financeiro||[]).find(m=>m.id===id);db.financeiro=db.financeiro.filter(m=>m.id!==id);save();await supabaseRemoverMovimentacao(mov);toast('Movimentação removida')}
   async function salvarConfig(){configSaving=true;db.config.nome=val('cfgNome')||'Donas da Massa';db.config.slogan=val('cfgSlogan')||'Seu macarrão. Seu jeito.';db.config.cnpj=val('cfgCnpj');db.config.email=val('cfgEmail');db.config.enderecoEmpresa=val('cfgEnderecoEmpresa');db.config.instagram=val('cfgInstagram');db.config.pix=val('cfgPix').trim();db.config.mensagemPagamento=val('cfgMensagemPagamento').trim()||seed().config.mensagemPagamento;db.config.whatsapp=chaveTelefone(val('cfgWhatsapp'));db.config.taxaEntrega=num('cfgTaxa');db.config.raioEntrega=val('cfgRaioEntrega');db.config.enderecoSaida=val('cfgEnderecoSaida');db.config.origemCep=cepLimpo(val('cfgOrigemCep'));db.config.origemNumero=val('cfgOrigemNumero').trim();db.config.faixasFrete=lerFaixasFreteFormulario();db.config.tempoPreparo=num('cfgTempoPreparo')||0;db.config.complementosGratis=num('cfgGratis');db.config.proteinasGratis=num('cfgProteinasGratis');{const rawFinal=val('cfgFinalizacoesGratis');db.config.finalizacoesGratis=rawFinal===''?'':Number(rawFinal||0);}db.config.metaDiaria=num('cfgMetaDiaria')||0;db.config.nomeInterno=val('cfgNomeInterno')||'Donas OS';db.config.adminSenha=val('cfgAdminSenha')||db.config.adminSenha||ADMIN_DEFAULT_PASS;db.config.operacaoSenha=val('cfgOperacaoSenha')||db.config.operacaoSenha||OPERACAO_DEFAULT_PASS;db.config.modoOperacao=!!el('cfgModoOperacao')?.checked;save();aplicarModoOperacao();const ok=await supabaseSalvarLoja();configSaving=false;configEditing=false;configLastUserInput=0;if(ok!==false)renderConfig(true);toast('Configurações salvas')}
@@ -1697,24 +1745,35 @@ const App=(()=>{
       await supabaseRequest('/clientes',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});
     }catch(e){console.warn('Cliente oficial Supabase:',e)}
   }
-  async function supabaseSalvarClienteAdm(c){
+  async function supabaseSalvarClienteAdm(c,anterior=null){
     try{
-      await supabaseGetLoja();
+      const lojaId=await supabaseGetLoja();
       const tel=chaveTelefone(c.telefone||'');
-      if(!tel)return toast('Informe telefone para salvar cliente oficial no banco.');
-      const payload={loja_id:supabaseLojaId,nome:c.nome||'Cliente',telefone:tel,cep:c.cep||'',rua:c.rua||'',numero:c.numero||'',complemento:c.complemento||'',endereco:c.endereco||enderecoCompleto(c),bairro:c.bairro||'',cidade:c.cidade||'',uf:c.uf||'',observacao:c.obs||''};
-      const sid=c.supabase_id||(String(c.id||'').startsWith('sbcli_')?String(c.id).replace('sbcli_',''):null);
-      if(sid){
-        await supabaseRequest('/clientes?id=eq.'+encodeURIComponent(sid),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});
-        return;
+      if(!tel){toast('Informe telefone para salvar cliente oficial no banco.');return null;}
+      let sid=c.supabase_id||(String(c.id||'').startsWith('sbcli_')?String(c.id).replace('sbcli_',''):null);
+      if(!sid&&anterior){sid=anterior.supabase_id||(String(anterior.id||'').startsWith('sbcli_')?String(anterior.id).replace('sbcli_',''):null);}
+      if(!sid&&anterior?.telefone){
+        const antigo=await supabaseRequest('/clientes?select=id&loja_id=eq.'+encodeURIComponent(lojaId)+'&telefone=eq.'+encodeURIComponent(chaveTelefone(anterior.telefone))+'&limit=1');
+        sid=antigo?.[0]?.id||null;
       }
-      const existente=await supabaseRequest('/clientes?select=id&telefone=eq.'+encodeURIComponent(tel)+'&limit=1');
-      if(existente?.[0]?.id){
-        await supabaseRequest('/clientes?id=eq.'+encodeURIComponent(existente[0].id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});
-      }else{
-        await supabaseRequest('/clientes',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});
-      }
-    }catch(e){console.warn('Salvar cliente ADM Supabase:',e);toast('Cliente salvo localmente, mas não consegui sincronizar com Supabase.')}
+      const args={p_id:sid||null,p_loja_id:lojaId,p_nome:c.nome||'Cliente',p_telefone:tel,p_cep:c.cep||'',p_rua:c.rua||'',p_numero:c.numero||'',p_complemento:c.complemento||'',p_endereco:c.endereco||enderecoCompleto(c),p_bairro:c.bairro||'',p_cidade:c.cidade||'',p_uf:c.uf||'',p_observacao:c.obs||''};
+      const retorno=await supabaseRequest('/rpc/donas_salvar_cliente_adm',{method:'POST',body:JSON.stringify(args)});
+      const salvo=Array.isArray(retorno)?retorno[0]:retorno;
+      if(!salvo?.id)throw new Error('A função do banco não retornou o cliente atualizado');
+      return mapClienteSupabase(salvo);
+    }catch(e){console.warn('Salvar cliente ADM Supabase:',e);return null;}
+  }
+  async function supabaseRemoverCliente(c){
+    try{
+      const lojaId=await supabaseGetLoja();
+      let sid=c?.supabase_id||(String(c?.id||'').startsWith('sbcli_')?String(c.id).replace('sbcli_',''):null);
+      if(!sid&&c?.telefone){const existente=await supabaseRequest('/clientes?select=id&loja_id=eq.'+encodeURIComponent(lojaId)+'&telefone=eq.'+encodeURIComponent(chaveTelefone(c.telefone))+'&limit=1');sid=existente?.[0]?.id||null;}
+      if(!sid)return true;
+      const retorno=await supabaseRequest('/rpc/donas_remover_cliente_adm',{method:'POST',body:JSON.stringify({p_id:sid,p_loja_id:lojaId})});
+      const removido=Array.isArray(retorno)?retorno[0]:retorno;
+      if(removido!==true&&removido?.donas_remover_cliente_adm!==true)throw new Error('O banco não confirmou a exclusão');
+      return true;
+    }catch(e){console.warn('Remover cliente Supabase:',e);return false;}
   }
   function statusParaSupabase(st){return {'Aguardando confirmação':'aguardando_confirmacao','Pedido Feito':'pedido_feito','Preparando':'preparando','Pedido Pronto':'pedido_pronto','Entregue':'entregue'}[st]||'aguardando_confirmacao'}
   async function supabaseEnviarPedido(p){
@@ -2614,6 +2673,6 @@ const App=(()=>{
     if(el('tipoPedido'))el('tipoPedido').addEventListener('change',()=>agendarCalculoFrete('pedido'));if(el('portalTipo'))el('portalTipo').addEventListener('change',()=>agendarCalculoFrete('portal'));
     if(el('producaoQtd')) el('producaoQtd').addEventListener('input',()=>{renderProducao();});
     ['pedido','portal','cli'].forEach(prefix=>{const cep=el(prefix+'Cep');if(cep)cep.addEventListener('blur',()=>buscarCep(prefix));});if(el('producaoReceita')) el('producaoReceita').addEventListener('change',()=>{renderProducao();});if(el('telefonePedido')){el('telefonePedido').addEventListener('input',()=>{renderResumo();buscarClientesPedido()})}if(el('portalTelefone')){el('portalTelefone').addEventListener('input',()=>sincronizarTelefonePortal('top'))}if(el('portalTelefoneFinal')){el('portalTelefoneFinal').addEventListener('input',()=>sincronizarTelefonePortal('final'))}if(el('compraData')&&!el('compraData').value)el('compraData').value=hoje();if(el('insightDataIni')&&!el('insightDataIni').value)el('insightDataIni').value=hojeLocal();if(el('insightDataFim')&&!el('insightDataFim').value)el('insightDataFim').value=hojeLocal();renderAll();alternarCamposTroco('pedido');alternarCamposTroco('portal');aplicarModoOperacao();aplicarPerfilAcesso();const last=localStorage.getItem(KEY+'_last_page');if(isPublicClient())page('portal');else if(perfilAtual()==='operacao')page(paginaPermitidaOperacao(last)?last:'pedidos');else if(last&&el('page-'+last))page(last);supabaseInicializar();setTimeout(iniciarModuloAcessos,700);document.body.classList.remove('booting');document.body.classList.add('boot-ready')}
-  return{init,page,renderAll,cancelarEdicaoPedido,selecionarTamanhoPedido,adicionarTamanhoPrato,removerTamanhoPrato,salvarTamanhosPrato,alternarCamposReserva,alternarCamposTroco,alternarFreteGratis,copiarMensagemPagamento,copiarChavePix,toggleItem,setQtdItem,setPorcaoItem,adicionarPratoPedido,carregarPratoPedido,atualizarPratoPedido,removerPratoPedido,finalizarPedido,limparPedido,iniciarReserva,atualizarStatus,confirmarPagamento,registrarPagamento,atualizarResumoPagamento,excluirPedido,confirmarExcluirPedido,escolherIcone,salvarItem,editarItem,limparFormItem,alternarDisponibilidadeItem,removerItem,salvarCliente,editarCliente,limparCliente,removerCliente,aprovarClientePendente,reprovarClientePendente,buscarCep,calcularFreteEndereco,localizarEnderecoSaida,centralizarMapaOrigem,confirmarPontoOrigem,adicionarFaixaFrete,removerFaixaFrete,salvarMovimentacao,removerMovimentacao,salvarConfig,verPedido,fecharModal,exportarBackup,importarBackup,buscarClientesPedido,selecionarClientePedido,carregarImagemMarketing,salvarMarketing,editarMarketing,limparMarketing,removerMarketing,salvarFavoritoPedido,alternarModoOperacao,adicionarMural,concluirMural,removerMural,fecharCaixa,registrarFechamento,logoutAdmin,restaurarUltimoSeguro,limparLogs,salvarCompra,editarCompra,limparCompra,removerCompra,adicionarInsumoReceita,removerInsumoReceita,salvarReceita,editarReceita,removerReceita,limparReceita,registrarProducao,renderProducao,renderPratoFeitoForm,carregarImagemPratoFeito,salvarPratoFeito,editarPratoFeito,limparPratoFeito,removerPratoFeito,alternarPratoFeitoAtivo,alternarAbaPratosFeitos,renderRelatorios,imprimirRelatorio,atualizarInsightsSupabase,atualizarPainelAcessos,salvarOnlineReady,prepararIdsOnline,salvarCupom,editarCupom,limparCupomForm,removerCupom,renderAssistentePorcoes,salvarAssistentePorcoes,toggleAssistentePorcoes,fecharAvisoLojaFechada,mostrarAvisoLojaFechada,aplicarCupomPortal,aplicarCupomPedidoInterno,usarFavorito,removerFavorito,abrirEditarDadosPedido,salvarDadosPedido,editarPedido,renderPortalCliente,mudarModoPortal,iniciarPratoFeito,toggleItemPratoFeito,confirmarPratoFeitoEditavel,cancelarPratoFeito,scrollPortalTo,scrollPortalToCategory,irParaCheckoutPortal,sincronizarTelefonePortal,togglePortalItem,setPortalQtd,setPortalPorcao,adicionarPratoPortal,removerPratoPortal,limparPortalCliente,criarPedidoPortal,copiarMensagemPortal,confirmarPedidoPortal,buscarClientePortal,selecionarClientePortalOnline,repetirUltimoPedidoPortal}
+  return{init,page,renderAll,cancelarEdicaoPedido,selecionarTamanhoPedido,adicionarTamanhoPrato,removerTamanhoPrato,salvarTamanhosPrato,alternarCamposReserva,alternarCamposTroco,alternarFreteGratis,copiarMensagemPagamento,copiarChavePix,toggleItem,setQtdItem,setPorcaoItem,adicionarPratoPedido,carregarPratoPedido,atualizarPratoPedido,removerPratoPedido,finalizarPedido,limparPedido,iniciarReserva,atualizarStatus,confirmarPagamento,registrarPagamento,atualizarResumoPagamento,excluirPedido,confirmarExcluirPedido,escolherIcone,salvarItem,editarItem,limparFormItem,alternarDisponibilidadeItem,removerItem,salvarCliente,editarCliente,limparCliente,removerCliente,removerRecusadosHistorico,aprovarClientePendente,reprovarClientePendente,buscarCep,calcularFreteEndereco,localizarEnderecoSaida,centralizarMapaOrigem,confirmarPontoOrigem,adicionarFaixaFrete,removerFaixaFrete,salvarMovimentacao,removerMovimentacao,salvarConfig,verPedido,fecharModal,exportarBackup,importarBackup,buscarClientesPedido,selecionarClientePedido,carregarImagemMarketing,salvarMarketing,editarMarketing,limparMarketing,removerMarketing,salvarFavoritoPedido,alternarModoOperacao,adicionarMural,concluirMural,removerMural,fecharCaixa,registrarFechamento,logoutAdmin,restaurarUltimoSeguro,limparLogs,salvarCompra,editarCompra,limparCompra,removerCompra,adicionarInsumoReceita,removerInsumoReceita,salvarReceita,editarReceita,removerReceita,limparReceita,registrarProducao,renderProducao,renderPratoFeitoForm,carregarImagemPratoFeito,salvarPratoFeito,editarPratoFeito,limparPratoFeito,removerPratoFeito,alternarPratoFeitoAtivo,alternarAbaPratosFeitos,renderRelatorios,imprimirRelatorio,atualizarInsightsSupabase,atualizarPainelAcessos,salvarOnlineReady,prepararIdsOnline,salvarCupom,editarCupom,limparCupomForm,removerCupom,renderAssistentePorcoes,salvarAssistentePorcoes,toggleAssistentePorcoes,fecharAvisoLojaFechada,mostrarAvisoLojaFechada,aplicarCupomPortal,aplicarCupomPedidoInterno,usarFavorito,removerFavorito,abrirEditarDadosPedido,salvarDadosPedido,editarPedido,renderPortalCliente,mudarModoPortal,iniciarPratoFeito,toggleItemPratoFeito,confirmarPratoFeitoEditavel,cancelarPratoFeito,scrollPortalTo,scrollPortalToCategory,irParaCheckoutPortal,sincronizarTelefonePortal,togglePortalItem,setPortalQtd,setPortalPorcao,adicionarPratoPortal,removerPratoPortal,limparPortalCliente,criarPedidoPortal,copiarMensagemPortal,confirmarPedidoPortal,buscarClientePortal,selecionarClientePortalOnline,repetirUltimoPedidoPortal}
 })();
 document.addEventListener('DOMContentLoaded',App.init);
