@@ -1318,6 +1318,7 @@ const App=(()=>{
         complementosGratis:Number(db.config.complementosGratis||0),
         proteinasGratis:Number(db.config.proteinasGratis||0),
         finalizacoesGratis:db.config.finalizacoesGratis===''?'':Number(db.config.finalizacoesGratis??1),
+        tamanhosPrato:db.config.tamanhosPrato||[],
         metaDiaria:Number(db.config.metaDiaria||0),
         nomeInterno:db.config.nomeInterno||'Donas OS',
         adminSenha:db.config.adminSenha||ADMIN_DEFAULT_PASS,
